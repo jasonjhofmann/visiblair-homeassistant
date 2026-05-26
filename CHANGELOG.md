@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Nothing yet — Phase 4b (GitHub push, HACS submission) is gated on
+live-test green-light.
+
+## [0.4.0] — 2026-05-26
+
+### Changed (breaking — but caught during pre-release live test)
+
+- **PM entity display names** dropped the `µm` suffix that HA's
+  slugify was Unicode-normalising into `mm` (producing entity IDs
+  like `sensor.family_room_visiblair_pm_0_1_mm`). New names are the
+  decimal `PM 0.1` / `PM 1.0` / `PM 10.0` form, which slugify cleanly
+  to `pm_0_1` / `pm_1_0` / `pm_10_0` — matching the internal
+  description-key naming.
+- **Migration:** users on v0.3.0 should delete + re-add the
+  integration entries to pick up the new entity IDs. (Caught during
+  the v0.3.0 live test before public release; v0.3.0 was never
+  published, so this only affects local pre-release installs.)
+
 ### Added (Phase 4a — docs polish for public release)
 
 - **README rewrite** dropping the "Phase 0 (architecture)" framing now
