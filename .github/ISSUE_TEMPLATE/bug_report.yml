@@ -1,0 +1,73 @@
+name: Bug report
+description: Something isn't working as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! A diagnostics download from the integration
+        tile is the single most useful thing you can attach — viewToken and
+        other secrets are auto-redacted, so it's safe to paste.
+
+  - type: input
+    id: integration_version
+    attributes:
+      label: Integration version
+      description: From the integration tile, or `custom_components/visiblair/manifest.json`.
+      placeholder: e.g. 0.3.0
+    validations:
+      required: true
+
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant Core version
+      description: Settings → About
+      placeholder: e.g. 2026.5.1
+    validations:
+      required: true
+
+  - type: input
+    id: sensor_model_fw
+    attributes:
+      label: VisiblAir model + firmware
+      description: Visible on the sensor's Info screen, or in a diagnostics download.
+      placeholder: e.g. Model E, firmware 1.7.2
+    validations:
+      required: false
+
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened
+      description: A clear description of the bug, including what you expected and what occurred instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log lines
+      description: From Settings → System → Logs, filtered to `custom_components.visiblair`.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics download
+      description: Drag the JSON file into this textarea, or paste its contents. Secrets are auto-redacted.
+    validations:
+      required: false
