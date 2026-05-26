@@ -27,7 +27,6 @@ from custom_components.visiblair.api import VisiblAirSensorData, _normalise
 from custom_components.visiblair.binary_sensor import BINARY_SENSOR_DESCRIPTIONS
 from custom_components.visiblair.sensor import SENSOR_DESCRIPTIONS
 
-
 # Authoritative wiring map. Adding a field to VisiblAirSensorData *must*
 # show up here too — the test below fails closed if you forget.
 DATACLASS_FIELD_TO_ENTITY_KEY: dict[str, str | None] = {

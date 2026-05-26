@@ -9,7 +9,7 @@ coordinator wiring) live in a separate file in Phase 3.
 from __future__ import annotations
 
 import json
-from datetime import timezone
+from datetime import UTC
 
 import pytest
 
@@ -143,7 +143,7 @@ def test_normalise_garbage_nested_blob_is_swallowed() -> None:
 def test_parse_iso8601_handles_nanosecond_precision() -> None:
     """``…T20:50:29.032652926Z`` is real VisiblAir output; we must accept it."""
     dt = _parse_iso8601("2026-05-26T20:50:29.032652926Z")
-    assert dt.tzinfo == timezone.utc
+    assert dt.tzinfo == UTC
     # Microsecond precision after truncation
     assert dt.microsecond == 32652
 
@@ -151,7 +151,7 @@ def test_parse_iso8601_handles_nanosecond_precision() -> None:
 def test_parse_iso8601_handles_no_subsecond() -> None:
     """Plain ISO without subseconds must still parse."""
     dt = _parse_iso8601("2026-05-26T20:50:29Z")
-    assert dt.tzinfo == timezone.utc
+    assert dt.tzinfo == UTC
 
 
 def test_trim_subsecond_precision() -> None:
@@ -162,9 +162,7 @@ def test_trim_subsecond_precision() -> None:
     assert _trim_subsecond_precision("2026-05-26T20:50:29.032+00:00") == (
         "2026-05-26T20:50:29.032+00:00"
     )
-    assert _trim_subsecond_precision("2026-05-26T20:50:29") == (
-        "2026-05-26T20:50:29"
-    )
+    assert _trim_subsecond_precision("2026-05-26T20:50:29") == ("2026-05-26T20:50:29")
 
 
 def test_normalise_requires_required_fields_at_api_layer() -> None:

@@ -37,9 +37,7 @@ PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
 type VisiblAirConfigEntry = ConfigEntry[VisiblAirCoordinator]
 
 
-async def async_setup_entry(
-    hass: HomeAssistant, entry: VisiblAirConfigEntry
-) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: VisiblAirConfigEntry) -> bool:
     """Set up a single VisiblAir sensor from a config entry."""
     session = async_get_clientsession(hass)
     api = VisiblAirAPI(
@@ -63,9 +61,7 @@ async def async_setup_entry(
     return True
 
 
-async def async_unload_entry(
-    hass: HomeAssistant, entry: VisiblAirConfigEntry
-) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: VisiblAirConfigEntry) -> bool:
     """Unload a config entry."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 

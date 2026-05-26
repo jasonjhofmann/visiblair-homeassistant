@@ -239,8 +239,7 @@ async def async_setup_entry(
     """Register every sensor entity defined in SENSOR_DESCRIPTIONS."""
     coordinator = entry.runtime_data
     async_add_entities(
-        VisiblAirSensor(coordinator, description)
-        for description in SENSOR_DESCRIPTIONS
+        VisiblAirSensor(coordinator, description) for description in SENSOR_DESCRIPTIONS
     )
 
 
