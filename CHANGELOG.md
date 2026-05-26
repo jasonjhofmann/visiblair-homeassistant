@@ -7,8 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet — Phase 4 (docs polish, GitHub push, HACS default-registry
-submission) is next.
+### Added (Phase 4a — docs polish for public release)
+
+- **README rewrite** dropping the "Phase 0 (architecture)" framing now
+  that the integration is feature-complete. Adds HACS install steps,
+  a setup walk-through that highlights the MAC + viewToken extraction
+  from the public-viewer URL, an entity-category table, options-flow
+  description, the cloud-only rationale, a quality-bar callout, and a
+  diagnostics blurb.
+- **SECURITY.md** — vulnerability-reporting policy (private email
+  rather than public issue), scope, response timeline.
+- **`.github/ISSUE_TEMPLATE/bug_report.yml`** — structured form prompting
+  for integration version, HA Core version, sensor model + firmware,
+  logs, and a diagnostics download.
+- **`.github/ISSUE_TEMPLATE/config.yml`** — disables the blank-issue
+  shortcut for security reports and routes general questions to GitHub
+  Discussions.
+
+Phase 4b (public-GitHub push + HACS default-registry submission)
+intentionally deferred — those are publishing actions that need
+explicit user authorization.
 
 ## [0.3.0] — 2026-05-26
 

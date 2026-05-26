@@ -2,83 +2,127 @@
 
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![CI](https://github.com/jasonjhofmann/visiblair-homeassistant/actions/workflows/ci.yml/badge.svg)](https://github.com/jasonjhofmann/visiblair-homeassistant/actions/workflows/ci.yml)
 
 Async, read-only Home Assistant integration for the
 [VisiblAir](https://visiblair.com/) air-quality sensor cloud API.
 
-Brings CO₂, temperature, humidity, VOC index, atmospheric pressure,
-full-spectrum particulate matter (PM 0.1–10 µm), battery state and
-sensor-health flags into Home Assistant for any VisiblAir sensor you
-have a "Public view" share link for.
+Each VisiblAir sensor becomes one HA device with **26 entities**:
+CO₂, temperature, humidity, VOC index, atmospheric pressure, the full
+PM 0.1 – 10 µm spectrum (8 sizes), battery state and charge status,
+plus diagnostic readouts for firmware, last sample, last calibration,
+and a hardware-health flag per PM-subsystem fault VisiblAir reports.
 
-## Status
+## Install
 
-**Phase 0 (architecture)** — repo scaffolded, API surface mapped, design
-decisions locked. Integration code lands in Phase 1.
+### Via HACS (recommended)
 
-See [docs/architecture.md](docs/architecture.md) for the full design,
-including a frozen record of what the VisiblAir cloud API does and does
-not expose.
+1. In HACS → ⋮ → **Custom repositories**, add
+   `https://github.com/jasonjhofmann/visiblair-homeassistant` as type
+   **Integration**.
+2. Search HACS for **VisiblAir** and download it.
+3. Restart Home Assistant.
+4. **Settings → Devices & Services → Add Integration → VisiblAir**.
 
-## Features
+### Manual
 
-Once Phase 1 ships:
+1. Copy `custom_components/visiblair/` to `<config>/custom_components/`.
+2. Restart Home Assistant.
+3. **Settings → Devices & Services → Add Integration → VisiblAir**.
 
-- **One HA device per sensor**, configured by pasting (MAC, viewToken)
-  from the VisiblAir cloud portal's "Public view" link
-- **Every metric** the sensor reports, as standard HA sensor entities
-  with correct device classes and units
-- **Power state** (AC connected, charging) and **hardware-health flags**
-  (PM fan/laser/RHT/gas-sensor errors, fan cleaning, fan-speed warning)
-  as binary sensors
-- **Diagnostic sensors** for firmware, last-calibration, last-sample
-- **Configurable poll cadence** (30–600 s) per sensor via options flow
-- **Reauth flow** for regenerated viewTokens
-- **Diagnostics download** with credentials auto-redacted
+## Setup
 
-## Why this integration exists
+You add **one HA config entry per sensor**. For each one you need its
+**MAC address** and **viewToken** — both visible in the VisiblAir cloud
+portal's "Public view" share link for that sensor:
 
-VisiblAir sells air-quality sensors with a clean public REST API for
-reading the latest sample, but they do not ship a Home Assistant
-integration. This fills that gap with a public-grade implementation:
-defensive parsing, every metric mapped, exhaustive documentation of the
-upstream API's quirks, no shortcuts.
+```
+https://public.visiblair.com/index.html?id=<MAC>&viewToken=<TOKEN>
+                                          ^^^^^               ^^^^^
+```
+
+Paste those into the Add VisiblAir Sensor form. The integration
+validates them against the live API before saving. Repeat for each
+sensor.
+
+## What you get per sensor
+
+| Category | Entities |
+|---|---|
+| Environmental | CO₂, temperature, humidity, VOC index, atmospheric pressure |
+| Particulate matter | PM 0.1, 0.3, 0.5, 1, 2.5, 4, 5, 10 µm (8 entities; HA device classes on PM 1/2.5/10) |
+| Power | battery (%), AC connected, charging |
+| Diagnostic | firmware version, last sample, last calibration, battery voltage |
+| Hardware health | PM fan fail, laser fail, RHT error, gas-sensor error, fan-speed warning, fan cleaning |
+
+All entities have proper device classes, units, and state classes —
+HA's long-term statistics, energy/air-quality dashboards, and graph
+extrapolation all work out of the box.
+
+## Options
+
+Each sensor has a **Configure** button in HA's Devices & Services panel
+that opens the options flow:
+
+- **Polling interval** — 30 s to 600 s (default 60 s, matching the
+  sensor's factory sample rate)
+
+Changing the interval reloads the entry so the new cadence takes effect
+immediately.
 
 ## Why cloud-only
 
-The VisiblAir hardware exposes an optional Local API
-(`http://co2click-AABBCC.local:8080/state` with `Authorization: Bearer
-<UUID>`) which would be the obviously-better target for a LAN-resident
-HA install. **It is not viable on current firmware (1.7.2).** Enabling
-the Local API toggle in the sensor's configuration menu causes the
-sensor to disconnect from the VisiblAir cloud and loop endlessly trying
-to upload data. If VisiblAir fixes the firmware, this integration will
-add a local mode; until then, cloud-only.
+VisiblAir sensors expose an optional **Local API** at
+`http://co2click-<MAC-suffix>.local:8080/state` that would be the
+obviously-better target for a LAN-resident HA install — same data,
+no cloud round-trip. **It is not viable on current firmware (1.7.2).**
+Enabling the Local API toggle in the sensor's configuration menu causes
+the sensor to disconnect from the VisiblAir cloud and loop endlessly
+trying to upload data, requiring a physical power cycle to recover.
 
-## Installation
+This integration adds a local mode the moment VisiblAir fixes the
+firmware. Until then: cloud-only.
 
-(Phase 4 will fill this in with HACS install instructions. For now,
-this integration is not yet installable.)
+## Quality bar
 
-## Configuration
+This integration aims to be public-grade reference quality:
 
-Per sensor, you need:
+- **Defensive parsing.** The cloud API returns `200 OK` with an empty
+  body for any URL that isn't an exact route match — a trap for
+  developers who think they've discovered an endpoint. We treat empty
+  body as failure regardless of HTTP status, parse JSON without
+  trusting the (mis-stated) `text/plain` Content-Type, and explicitly
+  handle the Go-style `{"Float64": x, "Valid": false}` nullable-numeric
+  wrappers so absent values become `None`, not zero.
+- **Description-driven entities.** All 26 entities are generated from
+  one table; adding a new field VisiblAir starts reporting is a
+  one-row change, kept honest by a wiring-map completeness test that
+  fails if you forget.
+- **Lint + type-check + test gates.** ruff (lint + format), mypy strict,
+  and pytest run on every push to main and every PR via GitHub Actions.
+  18 unit tests cover the normaliser quirks, entity description map,
+  and diagnostics redaction.
+- **Frozen architecture record.** See [docs/architecture.md](docs/architecture.md)
+  for the API surface, the catch-all trap, the local-API firmware bug
+  details, the entity map, and every design decision.
 
-1. The sensor's **Wi-Fi MAC address** (colon-separated, e.g.
-   `30:C6:F7:25:C4:A0`)
-2. The sensor's **viewToken** (an 8-character hex string from the
-   VisiblAir portal's "Public view" page for that sensor)
+## Diagnostics
 
-Both values appear in the public viewer URL VisiblAir generates:
-`https://public.visiblair.com/index.html?id=<MAC>&viewToken=<TOKEN>`
-
-Each sensor is its own HA config entry. Add as many as you have.
+The integration tile has a **Download diagnostics** action that produces
+a sanitised JSON snapshot you can paste into a bug report. The
+`viewToken` and all other potentially-sensitive fields are
+auto-redacted; safe to share publicly.
 
 ## Compatibility
 
 - **Home Assistant 2024.12.0+** (declared in `hacs.json`)
-- **VisiblAir Model E** firmware 1.7.2 confirmed
-- **VisiblAir Model E-Lite** should work but unconfirmed
+- **VisiblAir Model E** firmware 1.7.2 confirmed in production
+- **VisiblAir Model E-Lite** should work — open an issue if it doesn't
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, the local lint
+& test commands, and the "add a new entity" recipe.
 
 ## License
 
@@ -87,4 +131,4 @@ Apache 2.0 — see [LICENSE](LICENSE).
 ## Related projects
 
 - [aranet-cloud-homeassistant](https://github.com/jasonjhofmann/aranet-cloud-homeassistant)
-  — sibling integration for Aranet Cloud sensors, same author, same design ethos
+  — sibling integration for Aranet Cloud sensors, same author, same design ethos.
