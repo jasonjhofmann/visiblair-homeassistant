@@ -10,3 +10,4 @@ venv/
 .env
 .idea/
 .vscode/
+uv.lock
