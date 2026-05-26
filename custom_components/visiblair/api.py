@@ -21,11 +21,10 @@ The defensive parsing rules implemented here are documented in
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -160,7 +159,7 @@ class VisiblAirAPI:
                         f"VisiblAir API returned HTTP {resp.status}"
                     )
                 body = await resp.text()
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             raise VisiblAirOfflineError("VisiblAir API timed out") from err
         except aiohttp.ClientError as err:
             raise VisiblAirOfflineError(
@@ -223,7 +222,9 @@ def _normalise(raw: dict[str, Any]) -> VisiblAirSensorData:
         voc_index=_as_int(_nullable_field(raw.get("lastSampleVocIndex"), "Int64"))
         if isinstance(raw.get("lastSampleVocIndex"), dict)
         else _as_int(nested.get("voc")),
-        pressure_hpa=_as_float(_nullable_field(raw.get("lastSamplePressure"), "Float64"))
+        pressure_hpa=_as_float(
+            _nullable_field(raw.get("lastSamplePressure"), "Float64")
+        )
         if isinstance(raw.get("lastSamplePressure"), dict)
         else _as_float(nested.get("P")),
         pm_0_1_um=_first_pm(raw, nested, "lastSamplePm01", "pm01"),
@@ -242,12 +243,8 @@ def _normalise(raw: dict[str, Any]) -> VisiblAirSensorData:
         )
         if isinstance(raw.get("lastSampleBattVoltage"), dict)
         else _as_float(nested.get("battVoltage")),
-        ac_connected=bool(
-            raw.get("lastSampleIsACIN", nested.get("isACIN", False))
-        ),
-        charging=bool(
-            raw.get("lastSampleIsCharging", nested.get("isCharging", False))
-        ),
+        ac_connected=bool(raw.get("lastSampleIsACIN", nested.get("isACIN", False))),
+        charging=bool(raw.get("lastSampleIsCharging", nested.get("isCharging", False))),
         pm_fan_fail=bool(nested.get("PMFanFail", False)),
         pm_laser_fail=bool(nested.get("PMLaserFail", False)),
         pm_rht_error=bool(nested.get("PMRhtError", False)),
@@ -328,7 +325,7 @@ def _parse_iso8601(value: str) -> datetime:
     trimmed = _trim_subsecond_precision(value)
     parsed = datetime.fromisoformat(trimmed)
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
+        parsed = parsed.replace(tzinfo=UTC)
     return parsed
 
 
@@ -344,7 +341,7 @@ def _parse_naive_local(value: Any) -> datetime | None:
     if not isinstance(value, str) or not value:
         return None
     try:
-        return datetime.fromisoformat(value).replace(tzinfo=timezone.utc)
+        return datetime.fromisoformat(value).replace(tzinfo=UTC)
     except ValueError:
         return None
 

@@ -7,8 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet — Phase 3 (options flow polish, reauth flow polish, diagnostics
-download, brand assets, CI workflows) is next.
+Nothing yet — Phase 4 (docs polish, GitHub push, HACS default-registry
+submission) is next.
+
+## [0.3.0] — 2026-05-26
+
+### Added (Phase 3 — diagnostics, CI, polish)
+
+- **`diagnostics.py`** — HA "Download diagnostics" handler with full
+  credential redaction. Dumps the config entry (data + options), the
+  coordinator's state (interval, last-success, last-exception type),
+  and the latest normalised reading. The `view_token` and all
+  hypothetical-future raw-payload secrets (lat/long, email, MQTT
+  creds, delegate accounts, internal user IDs) are scrubbed via HA's
+  `async_redact_data` at any depth.
+- **`pyproject.toml`** with tool configuration for ruff (lint + format),
+  mypy strict, and pytest. Targets Python 3.13 (matching HA Core's
+  current floor — needed for mypy because HA itself uses PEP 696
+  generic-type-defaults internally).
+- **`.github/workflows/ci.yml`** — single-job GitHub Actions workflow
+  that runs ruff (check + format), mypy strict, and pytest on every
+  push to main + every PR. Uses `uv` to install Python + deps
+  on-demand (no requirements.txt needed; the workflow is the source
+  of truth for test deps).
+- **`CONTRIBUTING.md`** — bug-report format, dev setup with the exact
+  `uv run` commands, code-style notes, live-HA testing instructions.
+- **`custom_components/visiblair/brand/README.md`** — placeholder
+  documenting which PNG asset files HA expects for the integration
+  tile and HACS browse view, and the official HA brand spec. Real
+  asset files intentionally absent pending VisiblAir branding
+  approval; the integration is fully functional without them.
+- **`tests/test_diagnostics.py`** — 3 tests:
+  - `view_token` from entry.data must not survive the dump
+  - non-sensitive metadata (uuid, model, firmware, readings)
+    round-trips intact
+  - REDACT set covers every architecture-doc-documented secret
+    field (locks against silent drift)
+
+### Changed
+
+- **Ruff/mypy lint pass** on Phase 1 + Phase 2 code: import sorting
+  normalised, `from datetime import timezone` → `from datetime import
+  UTC` (Python 3.11+ alias), import-block formatting standardised,
+  ruff format applied to all 13 .py files.
+- **Manifest version** bumped to 0.3.0.
+
+### Verified
+
+- `ruff check custom_components/ tests/` — all checks passed
+- `ruff format --check` — 13 files already formatted
+- `mypy --strict custom_components/visiblair/` — 0 issues across 8
+  source files
+- `pytest tests/` — 18/18 pass in ~0.85s (warm cache)
 
 ## [0.2.0] — 2026-05-26
 
