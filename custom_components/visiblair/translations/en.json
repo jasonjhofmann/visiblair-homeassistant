@@ -1,0 +1,49 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add a VisiblAir sensor",
+        "description": "Paste the sensor's MAC address and viewToken. Both values appear in the public-viewer URL the VisiblAir portal generates for each sensor: https://public.visiblair.com/index.html?id=MAC&viewToken=TOKEN",
+        "data": {
+          "uuid": "MAC address",
+          "view_token": "viewToken"
+        }
+      },
+      "reauth_confirm": {
+        "title": "VisiblAir credentials need updating",
+        "description": "The viewToken for sensor {uuid} no longer works. Generate a new Public-view link from the VisiblAir portal and paste the updated viewToken.",
+        "data": {
+          "view_token": "viewToken"
+        }
+      }
+    },
+    "error": {
+      "invalid_mac": "MAC address must be six colon-separated hex bytes (e.g. AA:BB:CC:DD:EE:FF).",
+      "invalid_auth": "The MAC + viewToken combination was rejected by VisiblAir. Double-check the public-viewer URL.",
+      "cannot_connect": "Couldn't reach the VisiblAir API. Check internet connectivity and try again."
+    },
+    "abort": {
+      "already_configured": "This VisiblAir sensor is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "VisiblAir polling options",
+        "data": {
+          "scan_interval": "Polling interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "How often to poll the cloud API. Sensors emit a new sample every 60 s by default, so polling faster than that yields no new data."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "co2": {
+        "name": "CO₂"
+      }
+    }
+  }
+}
