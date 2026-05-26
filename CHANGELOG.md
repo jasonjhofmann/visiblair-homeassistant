@@ -7,7 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet — Phase 2 (full sensor/binary_sensor/diagnostic coverage) is next.
+Nothing yet — Phase 3 (options flow polish, reauth flow polish, diagnostics
+download, brand assets, CI workflows) is next.
+
+## [0.2.0] — 2026-05-26
+
+### Added (Phase 2 — full entity coverage)
+
+- **Sensor platform** now exposes 18 entities per VisiblAir sensor,
+  driven by a `SENSOR_DESCRIPTIONS` table in `sensor.py`:
+  - Environmental: CO₂, temperature, humidity, VOC index, atmospheric pressure
+  - Particulate matter: PM 0.1, 0.3, 0.5, 1, 2.5, 4, 5, 10 µm (8 entities;
+    HA device classes attached where they exist — PM1, PM2.5, PM10 — and
+    intentionally absent on the others, which still record + graph fine)
+  - Power: battery (%)
+  - Diagnostic: battery voltage (V), firmware version (str), last sample
+    (timestamp), last calibration (timestamp)
+- **Binary-sensor platform** (new) exposes 8 entities per sensor:
+  - Power: AC connected (`PLUG`), charging (`BATTERY_CHARGING`)
+  - Health: PM fan fail, PM laser fail, PM RHT error, PM gas-sensor error,
+    PM fan speed warning (all `PROBLEM`, `DIAGNOSTIC`), PM fan cleaning
+    (informational, `DIAGNOSTIC`, no device class)
+- **Translation keys + display names** for all 26 entities in
+  `strings.json` + `translations/en.json` (82 keys, identical key sets).
+- **`device_info_for(data)` helper** in `sensor.py`, shared with
+  `binary_sensor.py` so both platforms wire entities under the same HA
+  device.
+- **`tests/test_entities.py`** with 6 new tests:
+  - Wiring-map completeness check — every `VisiblAirSensorData` field
+    is either declared as an entity or explicitly marked as
+    device-metadata (catches "I added a field but forgot the entity").
+  - Description-set completeness — every declared entity key has a
+    matching description.
+  - No-key-collision-across-platforms check (since unique_id format is
+    `visiblair_{uuid}_{key}`).
+  - `value_fn` smoke tests for both sensor and binary-sensor descriptions
+    against the captured fixture.
+  - Canonical-value spot-checks (CO₂=523, battery=96.02, etc.).
+
+### Changed
+
+- **`__init__.py`** registers `Platform.BINARY_SENSOR` alongside
+  `Platform.SENSOR`.
+- **`sensor.py` was rewritten** from the Phase 1 proof-of-wire single-CO₂
+  class to the description-driven pattern. The pre-Phase-2 CO₂-only
+  entity is replaced by the full surface.
+- **Unique-ID format** is now `visiblair_{uuid}_{key}` (was `{uuid}_co2`
+  for the lone Phase-1 entity). The `visiblair_` prefix prevents
+  collisions if another integration ever uses the same MAC as a stable
+  identifier. No-op for users — Phase 1 was never released.
+
+### Verified
+
+- `pytest tests/` — 15/15 pass under Python 3.13 + HA installed via uv
+- `python3.14 -m compileall` clean
+- `strings.json` and `translations/en.json` — 82 keys, identical structure
 
 ## [0.1.0] — 2026-05-26
 

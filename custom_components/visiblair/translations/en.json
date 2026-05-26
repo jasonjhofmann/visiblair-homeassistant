@@ -41,9 +41,34 @@
   },
   "entity": {
     "sensor": {
-      "co2": {
-        "name": "CO₂"
-      }
+      "co2": {"name": "CO₂"},
+      "temperature": {"name": "Temperature"},
+      "humidity": {"name": "Humidity"},
+      "voc_index": {"name": "VOC index"},
+      "pressure": {"name": "Atmospheric pressure"},
+      "pm_0_1": {"name": "PM 0.1 µm"},
+      "pm_0_3": {"name": "PM 0.3 µm"},
+      "pm_0_5": {"name": "PM 0.5 µm"},
+      "pm_1_0": {"name": "PM 1 µm"},
+      "pm_2_5": {"name": "PM 2.5 µm"},
+      "pm_4_0": {"name": "PM 4 µm"},
+      "pm_5_0": {"name": "PM 5 µm"},
+      "pm_10_0": {"name": "PM 10 µm"},
+      "battery": {"name": "Battery"},
+      "battery_voltage": {"name": "Battery voltage"},
+      "firmware_version": {"name": "Firmware version"},
+      "last_sample": {"name": "Last sample"},
+      "last_calibration": {"name": "Last calibration"}
+    },
+    "binary_sensor": {
+      "ac_connected": {"name": "AC connected"},
+      "charging": {"name": "Charging"},
+      "pm_fan_fail": {"name": "PM fan fail"},
+      "pm_laser_fail": {"name": "PM laser fail"},
+      "pm_rht_error": {"name": "PM humidity/temperature error"},
+      "pm_gas_sensor_error": {"name": "PM gas sensor error"},
+      "pm_fan_cleaning": {"name": "PM fan cleaning"},
+      "pm_fan_speed_warning": {"name": "PM fan speed warning"}
     }
   }
 }
