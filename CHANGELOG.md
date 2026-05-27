@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.4.1] — 2026-05-27
+
+### Added
+
+- **Brand assets** (`icon.png` 256×256, `icon@2x.png` 512×512,
+  `logo.png` 767×193, `logo@2x.png` 1534×386) — PNG-RGBA with
+  transparency, sourced from VisiblAir branding. HA serves them as
+  the integration tile icon directly from
+  `custom_components/visiblair/brand/`. Live-verified on the
+  development HA instance.
+- **`.github/workflows/validate.yml`** — official `hacs/action@main`
+  + `home-assistant/actions/hassfest@master` validators running on
+  push, PR, daily cron, and manual dispatch. Both pass green.
+
+### Fixed
+
+- **Hassfest validation:** removed the URL from the add-sensor
+  config-flow `description` string (`strings.json` +
+  `translations/en.json`). Hassfest rejects URLs in translation
+  description fields. Replaced with a query-parameter-name
+  reference that conveys the same setup info without the URL.
+
 ### Changed
 
 - **`docs/architecture.md`** entity table refreshed to reflect the
@@ -16,18 +40,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   naming-collision note + display-name note documenting the v0.4.0
   µm-suffix correction. Phase plan reframed as historical now that
   Phase 4 is complete.
-- **`brand/README.md`** version reference updated from v0.3.0 to v0.4.0.
+- **`brand/README.md`** rewritten — drops the "intentionally absent"
+  framing now that assets are present; documents what's bundled and
+  notes the dark-theme variants are absent (HA falls back to the
+  non-dark variants).
 - **`CONTRIBUTING.md`** Python target clarified to 3.13 (matches
   `pyproject.toml`).
-- **`.github/ISSUE_TEMPLATE/bug_report.yml`** version-placeholder bumped
-  to 0.4.0.
+- **`.github/ISSUE_TEMPLATE/bug_report.yml`** version-placeholder
+  bumped to 0.4.0.
 
 ### Verified live
 
 - All 4 sensors in the development fleet (Audi RS Q8, Great Room,
-  South Bedroom, Study) report cleanly under the v0.4.0 entity
-  IDs — no residual `_mm` slugs. Confirmed via Home Assistant
-  entity-registry search 2026-05-26.
+  South Bedroom, Study) report cleanly under the v0.4.0+ entity
+  IDs — no residual `_mm` slugs.
+- Brand assets render as the integration tile icon in HA Core
+  Settings → Devices & Services → VisiblAir.
 
 ## [0.4.0] — 2026-05-26
 
