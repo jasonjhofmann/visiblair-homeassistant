@@ -20,5 +20,5 @@ for the canonical spec.
 Until the asset files are added here, HA falls back to a generic
 integration icon. The integration is fully functional without them.
 
-These assets are intentionally absent from the v0.3.0 release pending
+These assets are intentionally absent from initial releases pending
 official VisiblAir branding approval.
