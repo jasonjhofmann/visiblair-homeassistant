@@ -17,8 +17,7 @@ PNGs, transparent background, no padding. See the
 [Home Assistant brand guidelines](https://github.com/home-assistant/brands)
 for the canonical spec.
 
-Until the asset files are added here, HA falls back to a generic
-integration icon. The integration is fully functional without them.
-
-These assets are intentionally absent from initial releases pending
-official VisiblAir branding approval.
+Provided assets (added 2026-05-27): `icon.png`, `icon@2x.png`,
+`logo.png`, `logo@2x.png`. Sourced from VisiblAir's own branding.
+Dark-theme variants intentionally absent — HA falls back to the
+non-dark versions when a `dark_*` file is missing.
