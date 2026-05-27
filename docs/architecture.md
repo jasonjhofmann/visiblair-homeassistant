@@ -8,6 +8,13 @@ The goal of this document is that someone (future-us, a contributor)
 reading it cold should not need to re-do the API discovery work we did
 to reach these conclusions.
 
+> **Note (post-Phase-4 update):** the entity-naming table in
+> [§ Entity map](#entity-map) below reflects the *current* shipped naming
+> (after the v0.4.0 µm-suffix-removal correction), not the original
+> Phase-0 draft. The API-surface, defensive-parsing, and config-flow
+> sections are unchanged from the frozen record. See [CHANGELOG.md](../CHANGELOG.md)
+> for the iteration history.
+
 ## Upstream system: VisiblAir
 
 - Vendor: VisiblAir (visiblair.com), sells "CO2click"-branded air-quality
@@ -238,30 +245,39 @@ populated from the API response (`description`, `model`,
 
 #### Sensor entities
 
-| Entity suffix | Source field | Unit | Device class |
+Entity-key suffix shown below is the segment after `visiblair_{uuid}_`
+in `unique_id`, and the entity-ID slug component (e.g.
+`sensor.<device>_visiblair_pm_0_1`).
+
+| Entity key | Source field | Unit | Device class |
 |---|---|---|---|
 | `co2` | `lastSampleCo2` | `ppm` | `carbon_dioxide` |
 | `temperature` | `lastSampleTemperature` | `°C` | `temperature` |
 | `humidity` | `lastSampleHumidity` | `%` | `humidity` |
-| `voc_index` | `lastSampleVocIndex.Int64` | (none) | `aqi` (not perfect but closest) |
+| `voc_index` | `lastSampleVocIndex.Int64` | (none) | `aqi` (closest match) |
 | `pressure` | `lastSamplePressure.Float64` | `hPa` | `atmospheric_pressure` |
-| `pm01` | `lastSamplePm01.Float64` | `µg/m³` | `pm1` |
-| `pm03` | `lastSamplePm03.Float64` | `µg/m³` | (no HA class — leave unset) |
-| `pm05` | `lastSamplePm05.Float64` | `µg/m³` | (no HA class) |
-| `pm10` | `lastSamplePm10.Float64` | `µg/m³` | (PM 1 µm — `pm1`, not the HA `pm10` class which is 10 µm) |
-| `pm25` | `lastSamplePm25.Float64` | `µg/m³` | `pm25` |
-| `pm40` | (from nested `lastSampleDataRedis.pm40`) | `µg/m³` | (no HA class) |
-| `pm50` | `lastSamplePm50.Float64` | `µg/m³` | (no HA class) |
-| `pm100` | `lastSamplePm100.Float64` | `µg/m³` | `pm10` (10 µm) |
+| `pm_0_1` | `lastSamplePm01.Float64` | `µg/m³` | (no HA class) |
+| `pm_0_3` | `lastSamplePm03.Float64` | `µg/m³` | (no HA class) |
+| `pm_0_5` | `lastSamplePm05.Float64` | `µg/m³` | (no HA class) |
+| `pm_1_0` | `lastSamplePm10.Float64` | `µg/m³` | `pm1` |
+| `pm_2_5` | `lastSamplePm25.Float64` | `µg/m³` | `pm25` |
+| `pm_4_0` | nested `lastSampleDataRedis.pm40` | `µg/m³` | (no HA class) |
+| `pm_5_0` | `lastSamplePm50.Float64` | `µg/m³` | (no HA class) |
+| `pm_10_0` | `lastSamplePm100.Float64` | `µg/m³` | `pm10` |
 | `battery` | `lastSampleBattPct.Float64` | `%` | `battery` |
 | `battery_voltage` | `lastSampleBattVoltage.Float64` | `V` | `voltage` (diagnostic) |
 
-**Naming gotcha to fix later:** the API uses `pm10` for PM 1.0 µm and
-`pm100` for PM 10.0 µm — the trailing digit is a decimal-position quirk
-(`pm03` = 0.3 µm, `pm25` = 2.5 µm, `pm100` = 10.0 µm). The HA entity
-naming should be unambiguous: `pm_1_0_um`, `pm_10_0_um`, etc., to avoid
-confusion with HA's standard `pm1` / `pm10` device classes that share
-the names but have different meanings.
+**Naming-collision note:** the upstream API uses `pm10` for PM 1.0 µm
+and `pm100` for PM 10.0 µm — the trailing digit is a decimal-position
+quirk. HA entity keys translate to the decimal-um form
+(`pm_1_0`, `pm_10_0`, …) to avoid clashing with HA's `pm1`/`pm10`
+device-class names that have different physical meanings.
+
+**Display-name note (v0.4.0):** entity *display names* are bare numerics
+(`PM 1.0`, `PM 10.0`) with no `µm` suffix. The Unicode `µ` was
+slugifying to `m`, producing ugly entity-ID slugs like `pm_1_mm`. The
+unit context is conveyed by the `µg/m³` unit and the PM-spectrum
+grouping in the dashboard; the size is self-evident.
 
 #### Binary sensor entities
 
@@ -338,16 +354,21 @@ the raw API response with these fields redacted:
    documented. Default 60 s cadence is conservative. Worth load-testing
    before recommending shorter cadences.
 
-## Phase plan
+## Phase plan (historical)
 
-- **Phase 0 (done — 2026-05-26):** API research, architecture doc,
-  repo scaffold, captured sample fixture. Tagged `v0.0.1-phase0`.
-- **Phase 1:** `custom_components/visiblair/` scaffold with `api.py`,
-  `coordinator.py`, `config_flow.py`, `__init__.py`, `manifest.json`,
-  proof-of-wire CO₂ sensor. Tag `v0.1.0`.
-- **Phase 2:** full sensor/binary_sensor/diagnostic coverage. Tag
-  `v0.2.0`.
-- **Phase 3:** options flow, reauth flow, diagnostics, brand assets,
-  unit tests, mypy/ruff CI. Tag `v0.3.0`.
-- **Phase 4:** docs polish, CHANGELOG, CONTRIBUTING, public-GitHub
-  push, HACS default-registry submission.
+All phases complete as of 2026-05-26. The README, CHANGELOG, and
+integration code are now the source of truth for current behavior;
+this list is retained for historical context only.
+
+- **Phase 0 (2026-05-26, tag `v0.0.1-phase0`):** API research,
+  architecture doc, repo scaffold, captured sample fixture.
+- **Phase 1 (tag `v0.1.0`):** `custom_components/visiblair/` scaffold
+  with `api.py`, `coordinator.py`, `config_flow.py`, `__init__.py`,
+  `manifest.json`, proof-of-wire CO₂ sensor.
+- **Phase 2 (tag `v0.2.0`):** full sensor/binary_sensor/diagnostic
+  coverage — 26 entities per sensor.
+- **Phase 3 (tag `v0.3.0`):** options flow, reauth flow, diagnostics,
+  brand-asset placeholder, 18 unit tests, mypy-strict + ruff CI.
+- **Phase 4 (tag `v0.4.0`):** docs polish, SECURITY.md, issue
+  templates, PM display-name correction. Public GitHub push + HACS
+  default-registry submission follow as separate publishing actions.

@@ -59,8 +59,8 @@ to pass cleanly.
 ## Code style
 
 - Modern HA patterns: `entry.runtime_data` (not `hass.data[DOMAIN][…]`),
-  PEP 695 `type` statements (HA targets Python 3.12+), description-driven
-  entity tables.
+  PEP 695 `type` statements (the project targets Python 3.13 to match
+  HA Core), description-driven entity tables.
 - Ruff and mypy strict are the gate. The pyproject.toml at the repo root
   has the exact configuration.
 - Comments: only when WHY is non-obvious. Don't restate what the code does.

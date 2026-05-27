@@ -7,8 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet — Phase 4b (GitHub push, HACS submission) is gated on
-live-test green-light.
+### Changed
+
+- **`docs/architecture.md`** entity table refreshed to reflect the
+  current `pm_<size>` entity-key naming (previously held the early
+  Phase-0 draft using upstream `pm10`/`pm100`/`pm03` field names).
+  The "naming gotcha to fix later" callout is now resolved into a
+  naming-collision note + display-name note documenting the v0.4.0
+  µm-suffix correction. Phase plan reframed as historical now that
+  Phase 4 is complete.
+- **`brand/README.md`** version reference updated from v0.3.0 to v0.4.0.
+- **`CONTRIBUTING.md`** Python target clarified to 3.13 (matches
+  `pyproject.toml`).
+- **`.github/ISSUE_TEMPLATE/bug_report.yml`** version-placeholder bumped
+  to 0.4.0.
+
+### Verified live
+
+- All 4 sensors in the development fleet (Audi RS Q8, Great Room,
+  South Bedroom, Study) report cleanly under the v0.4.0 entity
+  IDs — no residual `_mm` slugs. Confirmed via Home Assistant
+  entity-registry search 2026-05-26.
 
 ## [0.4.0] — 2026-05-26
 
