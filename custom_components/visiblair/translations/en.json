@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Add a VisiblAir sensor",
-        "description": "Paste the sensor's MAC address and viewToken. Both values appear in the public-viewer URL the VisiblAir portal generates for each sensor: https://public.visiblair.com/index.html?id=MAC&viewToken=TOKEN",
+        "description": "Paste the sensor's MAC address and viewToken. Both values appear in the public-viewer URL the VisiblAir portal generates for each sensor — the MAC is the `id=` query parameter and the viewToken is the `viewToken=` parameter.",
         "data": {
           "uuid": "MAC address",
           "view_token": "viewToken"
