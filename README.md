@@ -1,5 +1,6 @@
 # VisiblAir for Home Assistant
 
+[![release](https://img.shields.io/github/v/release/jasonjhofmann/visiblair-homeassistant?label=release&color=blue)](https://github.com/jasonjhofmann/visiblair-homeassistant/releases)
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![CI](https://github.com/jasonjhofmann/visiblair-homeassistant/actions/workflows/ci.yml/badge.svg)](https://github.com/jasonjhofmann/visiblair-homeassistant/actions/workflows/ci.yml)
