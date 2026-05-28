@@ -9,6 +9,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.5.0] — 2026-05-27
+
+### Removed (breaking)
+
+- **OptionsFlow** and user-configurable poll interval. HA Core convention
+  is that the integration owns its cadence; we now poll at a fixed 60 s
+  (matching VisiblAir's factory sample rate, which was the previous
+  default). Old config entries with a saved `options.scan_interval` are
+  tolerated — the value is simply ignored. `CONF_SCAN_INTERVAL`,
+  `MIN_SCAN_INTERVAL_SECONDS`, and `MAX_SCAN_INTERVAL_SECONDS` dropped
+  from `const.py`.
+
+### Added
+
+- **`quality_scale.yaml`** (Bronze tier) with Silver-tier rule status
+  pre-mapped (done / todo / exempt).
+- **`"quality_scale": "bronze"`** in `manifest.json`.
+- **PEP-561 `py.typed`** marker so downstream type-checkers honour the
+  integration's type hints.
+- **`.github/copilot-instructions.md`** — HA Core integration conventions
+  adapted for custom integrations, so AI assistants editing this repo
+  produce idiomatic HA-style code.
+
+### Changed
+
+- HACS `homeassistant` floor bumped `2024.12.0` → `2025.1.0`.
+- `VisiblAirCoordinator.__init__` now takes the `ConfigEntry` directly
+  and passes it to `super().__init__(config_entry=entry)` per the
+  HA 2024.10+ pattern (so HA can attribute coordinator errors).
+- **`device_info_for()`** now uses `CONNECTION_NETWORK_MAC` +
+  `format_mac()` for the `DeviceInfo.connections` field, so DHCP /
+  Zeroconf discovery from other integrations can match this device. The
+  `unique_id` (config-entry key) stays upper-case for backward
+  compatibility with existing entries; the internal helper has been
+  renamed `_normalise_mac` → `_canonicalise_uuid` with a docstring
+  explaining the split between registry-facing canonical form and the
+  upper-case internal storage form.
+- `_async_options_updated` listener removed (no options to react to).
+- README updated to reflect the fixed cadence.
+
+### Notes
+
+Closes most Bronze quality-scale blockers for HA Core acceptance.
+Remaining gaps:
+
+- Config-flow / coordinator tests still missing.
+- `VisiblAirAuthError` still over-broad in `api.py` (any empty-body 200
+  is treated as auth failure; should narrow to confirmed credential
+  rejection).
+- `firmware_version` sensor still duplicates `DeviceInfo.sw_version`.
+- Silver-tier: `async_step_reconfigure` not implemented.
+
 ## [0.4.1] — 2026-05-27
 
 ### Added
