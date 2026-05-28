@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -15,7 +15,7 @@ from .api import (
     VisiblAirError,
     VisiblAirSensorData,
 )
-from .const import DOMAIN
+from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,15 +26,16 @@ class VisiblAirCoordinator(DataUpdateCoordinator[VisiblAirSensorData]):
     def __init__(
         self,
         hass: HomeAssistant,
+        entry: ConfigEntry,
         *,
         api: VisiblAirAPI,
-        scan_interval: timedelta,
     ) -> None:
         super().__init__(
             hass,
             _LOGGER,
             name=f"{DOMAIN}_{api.uuid}",
-            update_interval=scan_interval,
+            update_interval=DEFAULT_SCAN_INTERVAL,
+            config_entry=entry,
         )
         self._api = api
 
