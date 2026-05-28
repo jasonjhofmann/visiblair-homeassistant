@@ -11,14 +11,12 @@ DEFAULT_NAME: Final = "VisiblAir Sensor"
 
 CONF_UUID: Final = "uuid"
 CONF_VIEW_TOKEN: Final = "view_token"
-CONF_SCAN_INTERVAL: Final = "scan_interval"
 
 # VisiblAir sensors emit a new sample on a configurable on-device interval
 # (default 60 s). Polling faster than the sensor's own sample rate yields no
-# new data; the default is matched to the factory sample rate.
+# new data; the default is matched to the factory sample rate. Not
+# user-configurable per HA Core conventions (the integration owns its cadence).
 DEFAULT_SCAN_INTERVAL_SECONDS: Final = 60
-MIN_SCAN_INTERVAL_SECONDS: Final = 30
-MAX_SCAN_INTERVAL_SECONDS: Final = 600
 DEFAULT_SCAN_INTERVAL: Final = timedelta(seconds=DEFAULT_SCAN_INTERVAL_SECONDS)
 
 # Cloud API base URL — see docs/architecture.md. Note the non-standard port

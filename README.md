@@ -59,16 +59,11 @@ All entities have proper device classes, units, and state classes —
 HA's long-term statistics, energy/air-quality dashboards, and graph
 extrapolation all work out of the box.
 
-## Options
+## Polling
 
-Each sensor has a **Configure** button in HA's Devices & Services panel
-that opens the options flow:
-
-- **Polling interval** — 30 s to 600 s (default 60 s, matching the
-  sensor's factory sample rate)
-
-Changing the interval reloads the entry so the new cadence takes effect
-immediately.
+Polled at a fixed **60-second cadence**, matching VisiblAir sensors'
+factory sample rate. Not user-configurable per HA Core conventions —
+the integration owns its cadence.
 
 ## Why cloud-only
 

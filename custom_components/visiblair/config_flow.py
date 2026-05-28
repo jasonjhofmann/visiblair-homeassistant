@@ -1,9 +1,12 @@
-"""Config + options flows for VisiblAir.
+"""Config + reauth flows for VisiblAir.
 
 User pastes the sensor's MAC and viewToken (both visible in the
 VisiblAir cloud portal's "Public view" URL); we validate by hitting
 the live API once. One config entry per sensor — the MAC is the
 unique_id, so adding the same sensor twice is rejected automatically.
+
+There is no OptionsFlow — HA Core convention says the integration owns its
+poll cadence, so :data:`~.const.DEFAULT_SCAN_INTERVAL` is not user-tunable.
 """
 
 from __future__ import annotations
@@ -11,14 +14,10 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import voluptuous as vol
-from homeassistant.config_entries import (
-    ConfigFlow,
-    ConfigFlowResult,
-    OptionsFlow,
-)
+from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import (
@@ -28,19 +27,7 @@ from .api import (
     VisiblAirParseError,
     VisiblAirSensorData,
 )
-from .const import (
-    CONF_SCAN_INTERVAL,
-    CONF_UUID,
-    CONF_VIEW_TOKEN,
-    DEFAULT_NAME,
-    DEFAULT_SCAN_INTERVAL_SECONDS,
-    DOMAIN,
-    MAX_SCAN_INTERVAL_SECONDS,
-    MIN_SCAN_INTERVAL_SECONDS,
-)
-
-if TYPE_CHECKING:
-    from homeassistant.config_entries import ConfigEntry
+from .const import CONF_UUID, CONF_VIEW_TOKEN, DEFAULT_NAME, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -76,7 +63,7 @@ class VisiblAirConfigFlow(ConfigFlow, domain=DOMAIN):
             if not _MAC_RE.match(uuid_raw):
                 errors[CONF_UUID] = "invalid_mac"
             else:
-                uuid = _normalise_mac(uuid_raw)
+                uuid = _canonicalise_uuid(uuid_raw)
                 await self.async_set_unique_id(uuid)
                 self._abort_if_unique_id_configured()
 
@@ -147,43 +134,12 @@ class VisiblAirConfigFlow(ConfigFlow, domain=DOMAIN):
         api = VisiblAirAPI(session=session, uuid=uuid, view_token=view_token)
         return await api.fetch_latest()
 
-    @staticmethod
-    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
-        return VisiblAirOptionsFlow(config_entry)
 
+def _canonicalise_uuid(value: str) -> str:
+    """Internal storage form for the MAC-as-uuid unique_id (uppercase).
 
-class VisiblAirOptionsFlow(OptionsFlow):
-    """Per-entry runtime options — currently just the poll interval."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        # HA's OptionsFlow exposes config_entry as a property since 2024.12;
-        # we hold an aliased reference to keep IDE refactors clean.
-        self._entry = config_entry
-
-    async def async_step_init(
-        self,
-        user_input: Mapping[str, Any] | None = None,
-    ) -> ConfigFlowResult:
-        if user_input is not None:
-            return self.async_create_entry(title="", data=dict(user_input))
-
-        current = self._entry.options.get(
-            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_SECONDS
-        )
-        schema = vol.Schema(
-            {
-                vol.Required(CONF_SCAN_INTERVAL, default=current): vol.All(
-                    vol.Coerce(int),
-                    vol.Range(
-                        min=MIN_SCAN_INTERVAL_SECONDS,
-                        max=MAX_SCAN_INTERVAL_SECONDS,
-                    ),
-                ),
-            }
-        )
-        return self.async_show_form(step_id="init", data_schema=schema)
-
-
-def _normalise_mac(value: str) -> str:
-    """Canonicalise to upper-case colon-separated form."""
+    Kept upper-case for backward compatibility with pre-0.5 config entries.
+    Cross-integration matching (DHCP/Zeroconf discovery) uses ``format_mac``
+    on the boundary instead — see :func:`~.sensor.device_info_for`.
+    """
     return value.upper()

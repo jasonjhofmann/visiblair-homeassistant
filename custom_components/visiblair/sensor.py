@@ -31,7 +31,11 @@ from homeassistant.const import (
     UnitOfPressure,
     UnitOfTemperature,
 )
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.device_registry import (
+    CONNECTION_NETWORK_MAC,
+    DeviceInfo,
+    format_mac,
+)
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api import VisiblAirSensorData
@@ -266,14 +270,19 @@ class VisiblAirSensor(CoordinatorEntity[VisiblAirCoordinator], SensorEntity):
 
 
 def device_info_for(data: VisiblAirSensorData) -> DeviceInfo:
-    """Shared DeviceInfo factory — imported by binary_sensor.py too."""
+    """Shared DeviceInfo factory — imported by binary_sensor.py too.
+
+    The MAC is the sensor's UUID; ``format_mac`` canonicalises to HA's
+    standard lowercase colon-separated form so DHCP/Zeroconf discovery
+    from other integrations can match this device.
+    """
     return DeviceInfo(
         identifiers={(DOMAIN, data.uuid)},
         name=data.description or f"VisiblAir {data.uuid}",
         manufacturer=MANUFACTURER,
         model=f"Model {data.model}" if data.model else None,
         sw_version=data.firmware_version or None,
-        connections={("mac", data.uuid.lower())},
+        connections={(CONNECTION_NETWORK_MAC, format_mac(data.uuid))},
     )
 
 
