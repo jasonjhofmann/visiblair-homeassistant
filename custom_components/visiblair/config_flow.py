@@ -89,6 +89,42 @@ class VisiblAirConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
+    async def async_step_reconfigure(
+        self,
+        user_input: Mapping[str, Any] | None = None,
+    ) -> ConfigFlowResult:
+        """User-initiated viewToken update (the MAC stays fixed).
+
+        Only the viewToken can change, so there's no unique_id to re-check —
+        the entry's MAC is its identity and isn't re-entered here.
+        """
+        errors: dict[str, str] = {}
+        existing = self._get_reconfigure_entry()
+        uuid: str = existing.data[CONF_UUID]
+
+        if user_input is not None:
+            view_token: str = user_input[CONF_VIEW_TOKEN].strip()
+            try:
+                await self._validate(uuid, view_token)
+            except VisiblAirAuthError:
+                errors["base"] = "invalid_auth"
+            except VisiblAirOfflineError:
+                errors["base"] = "cannot_connect"
+            except VisiblAirParseError:
+                errors["base"] = "cannot_connect"
+            else:
+                return self.async_update_reload_and_abort(
+                    existing,
+                    data={**existing.data, CONF_VIEW_TOKEN: view_token},
+                )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=STEP_REAUTH_SCHEMA,
+            errors=errors,
+            description_placeholders={"uuid": uuid},
+        )
+
     async def async_step_reauth(
         self,
         entry_data: Mapping[str, Any],

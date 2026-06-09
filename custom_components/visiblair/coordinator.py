@@ -44,6 +44,13 @@ class VisiblAirCoordinator(DataUpdateCoordinator[VisiblAirSensorData]):
         try:
             return await self._api.fetch_latest()
         except VisiblAirAuthError as err:
-            raise ConfigEntryAuthFailed(str(err)) from err
+            raise ConfigEntryAuthFailed(
+                translation_domain=DOMAIN,
+                translation_key="auth_failed",
+            ) from err
         except VisiblAirError as err:
-            raise UpdateFailed(str(err)) from err
+            raise UpdateFailed(
+                translation_domain=DOMAIN,
+                translation_key="update_failed",
+                translation_placeholders={"error": str(err)},
+            ) from err

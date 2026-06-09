@@ -8,7 +8,7 @@
   "integration_type": "device",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/jasonjhofmann/visiblair-homeassistant/issues",
-  "quality_scale": "bronze",
+  "quality_scale": "platinum",
   "requirements": [],
-  "version": "0.5.0"
+  "version": "0.6.0"
 }
