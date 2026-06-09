@@ -38,7 +38,7 @@ https://public.visiblair.com/index.html?id=<MAC>&viewToken=<TOKEN>
 ```
 
 - `<MAC>` is the sensor's Wi-Fi MAC, colon-separated, e.g.
-  `30:C6:F7:25:C4:A0`. (Spelled `uuid` in the REST API.)
+  `AA:BB:CC:DD:EE:FF`. (Spelled `uuid` in the REST API.)
 - `<TOKEN>` is an opaque 8-character hex string the portal owner can
   regenerate.
 
@@ -207,7 +207,7 @@ visiblair-homeassistant/
 
 **One HA config entry per sensor.** Each entry stores:
 
-- `unique_id`: the sensor MAC (e.g. `30:C6:F7:25:C4:A0`)
+- `unique_id`: the sensor MAC (e.g. `AA:BB:CC:DD:EE:FF`)
 - `data`:
   - `uuid`: MAC as written
   - `view_token`: the 8-char hex string

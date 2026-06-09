@@ -33,10 +33,12 @@ jobs:
             --with voluptuous \
             mypy custom_components/visiblair/
 
-      - name: Pytest
+      - name: Pytest (with coverage gate)
         run: |
           uv run --python 3.13 \
-            --with pytest \
-            --with pytest-asyncio \
-            --with homeassistant \
-            python -m pytest tests/ -v
+            --with pytest-homeassistant-custom-component \
+            --with pytest-cov \
+            python -m pytest tests/ -v \
+              --cov=custom_components.visiblair \
+              --cov-report=term-missing \
+              --cov-fail-under=95

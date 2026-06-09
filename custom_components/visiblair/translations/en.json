@@ -15,28 +15,32 @@
         "data": {
           "view_token": "viewToken"
         }
+      },
+      "reconfigure": {
+        "title": "Reconfigure VisiblAir sensor",
+        "description": "Update the viewToken for sensor {uuid}. The MAC address can't change — to add a different sensor, use Add Integration instead.",
+        "data": {
+          "view_token": "viewToken"
+        }
       }
     },
     "error": {
-      "invalid_mac": "MAC address must be six colon-separated hex bytes (e.g. 30:C6:F7:25:C4:A0).",
+      "invalid_mac": "MAC address must be six colon-separated hex bytes (e.g. AA:BB:CC:DD:EE:FF).",
       "invalid_auth": "The MAC + viewToken combination was rejected by VisiblAir. Double-check the public-viewer URL.",
       "cannot_connect": "Couldn't reach the VisiblAir API. Check internet connectivity and try again."
     },
     "abort": {
-      "already_configured": "This VisiblAir sensor is already configured."
+      "already_configured": "This VisiblAir sensor is already configured.",
+      "reauth_successful": "The viewToken was updated.",
+      "reconfigure_successful": "The viewToken was updated."
     }
   },
-  "options": {
-    "step": {
-      "init": {
-        "title": "VisiblAir polling options",
-        "data": {
-          "scan_interval": "Polling interval (seconds)"
-        },
-        "data_description": {
-          "scan_interval": "How often to poll the cloud API. Sensors emit a new sample every 60 s by default, so polling faster than that yields no new data."
-        }
-      }
+  "exceptions": {
+    "auth_failed": {
+      "message": "The VisiblAir viewToken was rejected. Re-authenticate with a fresh Public-view link."
+    },
+    "update_failed": {
+      "message": "Could not update data from VisiblAir: {error}"
     }
   },
   "entity": {

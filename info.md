@@ -38,7 +38,7 @@ sensor health into Home Assistant for any VisiblAir sensor you have a
 
 Per sensor, you need:
 
-1. The sensor's **Wi-Fi MAC address** (colon-separated, e.g. `30:C6:F7:25:C4:A0`)
+1. The sensor's **Wi-Fi MAC address** (colon-separated, e.g. `AA:BB:CC:DD:EE:FF`)
 2. The sensor's **viewToken** (an 8-character hex string from the VisiblAir
    portal's "Public view" page for that sensor)
 
