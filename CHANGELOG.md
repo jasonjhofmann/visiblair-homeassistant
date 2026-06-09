@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.6.1] — 2026-06-09
+
+### Logging
+
+- Level-appropriate, secret-safe `debug` logging: a setup line (sensor name,
+  MAC, poll interval) and a per-poll line (`Polled <MAC>: CO2=… PM2.5=…
+  battery=…`). The viewToken is never logged at any level. See
+  *README → Troubleshooting → Enabling debug logs*.
+
+### Fixed (docs)
+
+- `info.md` no longer claims a "Configurable poll cadence (30–600 s)" — there
+  is no such option; the cadence is a fixed 60 s. Documented the reconfigure
+  flow and the disabled-by-default entities.
+- `CONTRIBUTING.md` test command now uses
+  `pytest-homeassistant-custom-component` (the old command would fail) and runs
+  with coverage.
+
 ## [0.6.0] — 2026-06-09
 
 Quality scale **Bronze → Platinum** (`manifest.json` `"quality_scale": "platinum"`).

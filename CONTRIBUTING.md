@@ -41,8 +41,11 @@ Adding a new sensor or binary-sensor is almost always:
 git clone https://github.com/jasonjhofmann/visiblair-homeassistant
 cd visiblair-homeassistant
 
-# Run the test suite (uv handles the Python + dependency install)
-uv run --python 3.13 --with pytest --with pytest-asyncio --with homeassistant python -m pytest tests/ -v
+# Run the test suite (uv handles the Python + dependency install).
+# The tests use pytest-homeassistant-custom-component, which pulls in a
+# pinned Home Assistant; CI gates coverage at >=95%.
+uv run --python 3.13 --with pytest-homeassistant-custom-component --with pytest-cov \
+  python -m pytest tests/ --cov=custom_components.visiblair --cov-report=term-missing
 
 # Lint
 uv run --python 3.13 --with ruff ruff check custom_components/ tests/
