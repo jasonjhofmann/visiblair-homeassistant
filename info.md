@@ -19,9 +19,13 @@ sensor health into Home Assistant for any VisiblAir sensor you have a
   fan-speed warning) as `binary_sensor` entities
 - Diagnostic sensors for firmware version, last-calibration timestamp,
   last-sample timestamp
-- Configurable poll cadence (30–600 s) per sensor
-- Reauth flow if a sensor's viewToken is regenerated
+- Fixed 60-second poll cadence (matching the sensor's factory sample rate;
+  not user-configurable, per HA Core conventions)
+- Reauth (viewToken regenerated) and reconfigure (change the viewToken) flows
 - Diagnostics download with credentials auto-redacted
+
+Niche PM sizes (0.1 / 0.3 / 0.5 / 4.0 / 5.0 µm) and the battery-voltage
+diagnostic are disabled by default — enable them per entity if you want them.
 
 ## What it doesn't do
 
