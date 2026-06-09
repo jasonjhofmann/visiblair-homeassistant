@@ -48,6 +48,10 @@ if TYPE_CHECKING:
 
     from . import VisiblAirConfigEntry
 
+# Coordinator-backed, read-only entities — no per-entity update fan-out.
+# 0 = unlimited (the coordinator already serialises the single fetch).
+PARALLEL_UPDATES = 0
+
 
 @dataclass(frozen=True, kw_only=True)
 class VisiblAirSensorEntityDescription(SensorEntityDescription):
@@ -109,7 +113,6 @@ SENSOR_DESCRIPTIONS: tuple[VisiblAirSensorEntityDescription, ...] = (
         # device class is a perfect fit — `AQI` is close in spirit but
         # implies a published scale, which VOC index isn't.
         state_class=SensorStateClass.MEASUREMENT,
-        icon="mdi:molecule",
         suggested_display_precision=0,
         value_fn=lambda d: d.voc_index,
     ),
@@ -129,6 +132,8 @@ SENSOR_DESCRIPTIONS: tuple[VisiblAirSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
         suggested_display_precision=2,
+        # Niche PM size — off by default; PM1/2.5/10 are the standard ones.
+        entity_registry_enabled_default=False,
         value_fn=lambda d: d.pm_0_1_um,
     ),
     VisiblAirSensorEntityDescription(
@@ -137,6 +142,7 @@ SENSOR_DESCRIPTIONS: tuple[VisiblAirSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
         suggested_display_precision=2,
+        entity_registry_enabled_default=False,
         value_fn=lambda d: d.pm_0_3_um,
     ),
     VisiblAirSensorEntityDescription(
@@ -145,6 +151,7 @@ SENSOR_DESCRIPTIONS: tuple[VisiblAirSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
         suggested_display_precision=2,
+        entity_registry_enabled_default=False,
         value_fn=lambda d: d.pm_0_5_um,
     ),
     VisiblAirSensorEntityDescription(
@@ -171,6 +178,7 @@ SENSOR_DESCRIPTIONS: tuple[VisiblAirSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
         suggested_display_precision=2,
+        entity_registry_enabled_default=False,
         value_fn=lambda d: d.pm_4_0_um,
     ),
     VisiblAirSensorEntityDescription(
@@ -179,6 +187,7 @@ SENSOR_DESCRIPTIONS: tuple[VisiblAirSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
         suggested_display_precision=2,
+        entity_registry_enabled_default=False,
         value_fn=lambda d: d.pm_5_0_um,
     ),
     VisiblAirSensorEntityDescription(
@@ -209,13 +218,14 @@ SENSOR_DESCRIPTIONS: tuple[VisiblAirSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         entity_category=EntityCategory.DIAGNOSTIC,
         suggested_display_precision=2,
+        # Diagnostic detail — off by default; the battery % is the primary one.
+        entity_registry_enabled_default=False,
         value_fn=lambda d: d.battery_voltage,
     ),
     VisiblAirSensorEntityDescription(
         key="firmware_version",
         translation_key="firmware_version",
         entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:chip",
         value_fn=lambda d: d.firmware_version or None,
     ),
     VisiblAirSensorEntityDescription(

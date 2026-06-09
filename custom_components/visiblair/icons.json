@@ -1,0 +1,11 @@
+{
+  "entity": {
+    "sensor": {
+      "voc_index": { "default": "mdi:molecule" },
+      "firmware_version": { "default": "mdi:chip" }
+    },
+    "binary_sensor": {
+      "pm_fan_cleaning": { "default": "mdi:fan-clock" }
+    }
+  }
+}

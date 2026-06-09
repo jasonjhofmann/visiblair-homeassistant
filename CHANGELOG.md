@@ -9,6 +9,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [0.6.0] — 2026-06-09
+
+Quality scale **Bronze → Platinum** (`manifest.json` `"quality_scale": "platinum"`).
+
+### Added
+
+- **Full Home Assistant test suite** under `tests/` (config / reauth /
+  reconfigure flows, setup/unload, coordinator auth + API-error paths,
+  sensor + binary_sensor states, the API HTTP layer, diagnostics redaction)
+  via `pytest-homeassistant-custom-component` — **100% line coverage**, on top
+  of the existing normaliser/entity-map tests.
+- **Reconfigure flow** — update a sensor's viewToken from **⋮ → Reconfigure**
+  without removing and re-adding it.
+- **`PARALLEL_UPDATES = 0`** on both platforms.
+- **Translated exceptions** — coordinator auth/update failures raise with
+  `translation_key`s (`strings.json` `exceptions`).
+- **Icon translations** (`icons.json`) for the VOC-index, firmware, and
+  PM-fan-cleaning entities (moved out of code).
+- **CI**: pytest now runs with a ≥95% coverage gate.
+
+### Changed
+
+- **Niche PM sizes (0.1 / 0.3 / 0.5 / 4.0 / 5.0 µm) and battery voltage are
+  now disabled by default** — enable per entity if wanted. PM 1 / 2.5 / 10 µm
+  stay enabled.
+- Quality scale: `brands`, `docs-removal-instructions`, `parallel-updates`,
+  `config-flow-test-coverage`, `test-coverage`, and the full Gold + Platinum
+  rule sets are now done/exempt. Single-device-specific rules
+  (`dynamic-devices`, `stale-devices`, `discovery`) are exempt with rationale.
+
+### Fixed (docs)
+
+- Removed the dead `options` / `scan_interval` translation block (no
+  OptionsFlow exists). Added **Removing the integration**, **Use cases**,
+  **Example automations**, **Known limitations**, and **Troubleshooting**
+  (incl. enable-debug-logs) sections; refreshed the stale test count.
+
 ## [0.5.0] — 2026-05-27
 
 ### Removed (breaking)
