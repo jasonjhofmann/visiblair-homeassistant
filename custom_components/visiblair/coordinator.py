@@ -42,7 +42,7 @@ class VisiblAirCoordinator(DataUpdateCoordinator[VisiblAirSensorData]):
     async def _async_update_data(self) -> VisiblAirSensorData:
         """Fetch one reading; map API exceptions onto HA's coordinator errors."""
         try:
-            return await self._api.fetch_latest()
+            data = await self._api.fetch_latest()
         except VisiblAirAuthError as err:
             raise ConfigEntryAuthFailed(
                 translation_domain=DOMAIN,
@@ -54,3 +54,12 @@ class VisiblAirCoordinator(DataUpdateCoordinator[VisiblAirSensorData]):
                 translation_key="update_failed",
                 translation_placeholders={"error": str(err)},
             ) from err
+
+        _LOGGER.debug(
+            "Polled %s: CO2=%s ppm, PM2.5=%s µg/m³, battery=%s%%",
+            self._api.uuid,
+            data.co2_ppm,
+            data.pm_2_5_um,
+            data.battery_pct,
+        )
+        return data

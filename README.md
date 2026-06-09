@@ -208,8 +208,15 @@ logger:
     custom_components.visiblair: debug
 ```
 
-At `debug` you'll see the per-poll coordinator activity and any API
-transport/parse errors. The viewToken is **never** logged at any level.
+At `debug` you'll see, in `Settings → System → Logs`:
+
+- **Setup** — the sensor name, MAC, and poll interval.
+- **Each poll** — `Polled <MAC>: CO2=… PM2.5=… battery=…` once per cycle, so
+  you can confirm data is flowing.
+- **Errors** — API transport/parse failures (coordinator failures are logged
+  once on failure and once on recovery, HA's standard behaviour).
+
+The viewToken is **never** logged at any level.
 
 ## Contributing
 

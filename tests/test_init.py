@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import logging
+from unittest.mock import MagicMock
+
+import pytest
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
@@ -28,6 +32,22 @@ async def test_setup_and_unload(
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
     assert entry.state is ConfigEntryState.NOT_LOADED
+
+
+async def test_setup_and_poll_logged_at_debug(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+    mock_api: MagicMock,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Setup and the first poll emit secret-safe debug lines."""
+    with caplog.at_level(logging.DEBUG, logger="custom_components.visiblair"):
+        await setup_integration(hass, mock_config_entry, mock_api)
+
+    assert "Set up VisiblAir sensor" in caplog.text
+    assert "Polled" in caplog.text
+    # The viewToken must never appear in logs.
+    assert "test-view-token" not in caplog.text
 
 
 async def test_device_registered(
