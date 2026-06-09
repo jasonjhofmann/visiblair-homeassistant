@@ -33,6 +33,9 @@ if TYPE_CHECKING:
 
     from . import VisiblAirConfigEntry
 
+# Coordinator-backed, read-only entities — no per-entity update fan-out.
+PARALLEL_UPDATES = 0
+
 
 @dataclass(frozen=True, kw_only=True)
 class VisiblAirBinarySensorEntityDescription(BinarySensorEntityDescription):
@@ -90,7 +93,6 @@ BINARY_SENSOR_DESCRIPTIONS: tuple[VisiblAirBinarySensorEntityDescription, ...] =
         # No device class — this is informational (sensor is doing routine
         # housekeeping), not a problem.
         entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:fan-clock",
         value_fn=lambda d: d.pm_fan_cleaning,
     ),
     VisiblAirBinarySensorEntityDescription(

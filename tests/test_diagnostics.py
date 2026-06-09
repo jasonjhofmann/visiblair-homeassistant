@@ -11,8 +11,17 @@ from custom_components.visiblair.api import _normalise
 from custom_components.visiblair.const import CONF_UUID, CONF_VIEW_TOKEN
 from custom_components.visiblair.diagnostics import (
     REDACT,
+    _serialise,
     async_get_config_entry_diagnostics,
 )
+
+
+def test_serialise_recurses_dicts_and_lists() -> None:
+    """The JSON-safe serialiser walks nested dicts/lists, not just scalars."""
+    assert _serialise({"nested": [1, "x"], "scalar": 5}) == {
+        "nested": [1, "x"],
+        "scalar": 5,
+    }
 
 
 def _build_fake_entry(coordinator: SimpleNamespace) -> SimpleNamespace:

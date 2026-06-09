@@ -5,22 +5,22 @@ rules:
     comment: Integration does not register custom service actions.
   appropriate-polling: done
   brands:
-    status: todo
-    comment: HACS integration; not yet listed in home-assistant/brands.
+    status: done
+    comment: >-
+      Brand assets ship in-tree at custom_components/visiblair/brand/ (icon,
+      logo, @2x), served by the HA 2026.3+ local brands proxy.
+      home-assistant/brands no longer accepts custom-integration PRs, so the
+      in-tree folder is the canonical mechanism and satisfies this rule.
   common-modules: done
   config-flow: done
-  config-flow-test-coverage:
-    status: todo
-    comment: Existing tests cover normalisation/diagnostics; config-flow paths (user, reauth, abort-on-duplicate, invalid MAC) still need coverage with pytest-homeassistant-custom-component.
+  config-flow-test-coverage: done
   dependency-transparency: done
   docs-actions:
     status: exempt
     comment: No service actions to document.
   docs-high-level-description: done
   docs-installation-instructions: done
-  docs-removal-instructions:
-    status: todo
-    comment: Add a "Removing the integration" section to README.
+  docs-removal-instructions: done
   entity-event-setup:
     status: exempt
     comment: No event subscriptions; all data flow is via DataUpdateCoordinator.
@@ -41,10 +41,79 @@ rules:
   entity-unavailable: done
   integration-owner: done
   log-when-unavailable: done
-  parallel-updates:
-    status: todo
-    comment: PARALLEL_UPDATES not declared in any platform module.
+  parallel-updates: done
   reauthentication-flow: done
   test-coverage:
-    status: todo
-    comment: Existing tests cover API/diagnostics; coordinator + entity tests still needed.
+    status: done
+    comment: >-
+      Full pytest suite under tests/ (config/reauth/reconfigure flows,
+      setup/unload + coordinator error paths, sensor + binary_sensor states,
+      API HTTP layer, diagnostics redaction). 100% line coverage; CI gates
+      at >=95%.
+
+  # Gold
+  devices: done
+  diagnostics: done
+  discovery:
+    status: exempt
+    comment: Cloud-polling sensor reached via the VisiblAir REST API; nothing on the local network to discover.
+  discovery-update-info:
+    status: exempt
+    comment: No network discovery (see discovery).
+  docs-data-update:
+    status: done
+    comment: README "Polling".
+  docs-examples:
+    status: done
+    comment: README "Example automations".
+  docs-known-limitations:
+    status: done
+    comment: README "Known limitations".
+  docs-supported-devices:
+    status: done
+    comment: README "Compatibility".
+  docs-supported-functions:
+    status: done
+    comment: README "What you get per sensor".
+  docs-troubleshooting:
+    status: done
+    comment: README "Troubleshooting".
+  docs-use-cases:
+    status: done
+    comment: README "Use cases".
+  dynamic-devices:
+    status: exempt
+    comment: One config entry maps to exactly one sensor/device; there are no sub-devices to add dynamically.
+  entity-category: done
+  entity-device-class: done
+  entity-disabled-by-default:
+    status: done
+    comment: Niche PM sizes (0.1/0.3/0.5/4.0/5.0 µm) and battery voltage are disabled by default.
+  entity-translations: done
+  exception-translations:
+    status: done
+    comment: Coordinator raises ConfigEntryAuthFailed/UpdateFailed with translation_domain + translation_key (strings.json "exceptions").
+  icon-translations:
+    status: done
+    comment: icons.json provides icons for voc_index/firmware_version/pm_fan_cleaning; device-class entities use HA defaults.
+  reconfiguration-flow: done
+  repair-issues:
+    status: exempt
+    comment: >-
+      No user-fixable conditions beyond credentials, which are handled by the
+      reauthentication flow. Hardware-health flags are surfaced as binary
+      sensors, not actionable repairs.
+  stale-devices:
+    status: exempt
+    comment: One device per config entry; removing the sensor means deleting the entry.
+
+  # Platinum
+  async-dependency:
+    status: done
+    comment: The in-repo API client is fully async (aiohttp); no executor jobs or blocking I/O.
+  inject-websession:
+    status: done
+    comment: HA's shared aiohttp session is passed into VisiblAirAPI(session=...).
+  strict-typing:
+    status: done
+    comment: Ships py.typed and passes mypy --strict; CI runs strict mypy over custom_components/visiblair.
