@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  lint-and-test:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -33,9 +33,40 @@ jobs:
             --with voluptuous \
             mypy custom_components/visiblair/
 
-      - name: Pytest (with coverage gate)
+  # The declared support floor (hacs.json: HA 2025.1.0) ran on Python 3.12,
+  # where the modern HA test harness no longer installs. This leg can't run
+  # the suite, but it definitively rejects syntax newer than the floor
+  # (e.g. the unparenthesized except clause that shipped in 0.6.2).
+  syntax-floor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Compile all modules on Python 3.12
         run: |
-          uv run --python 3.14 \
+          uv run --python 3.12 --no-project \
+            python -m compileall -q custom_components/
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 3.14 resolves the current HA test harness; 3.13 resolves the
+        # newest harness that still supports it, so the same suite also
+        # runs against an older Home Assistant.
+        python-version: ["3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Pytest on Python ${{ matrix.python-version }} (with coverage gate)
+        run: |
+          uv run --python ${{ matrix.python-version }} \
             --with pytest-homeassistant-custom-component \
             --with pytest-cov \
             python -m pytest tests/ -v \

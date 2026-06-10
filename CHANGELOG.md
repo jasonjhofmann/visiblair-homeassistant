@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.6.3 — 2026-06-10
+
+Hotfix: restore compatibility with Python ≤ 3.13 (all Home Assistant
+releases before mid-2026).
+
+- **Fixed:** `api.py` used unparenthesized `except TypeError, ValueError:`
+  (PEP 758, Python 3.14-only syntax). On Python ≤ 3.13 the module failed
+  to import with a `SyntaxError`, so the integration could not load at
+  all. Restored the parenthesized form.
+- **Root cause:** 0.6.2 moved `ruff` `target-version` to `py314`, and with
+  that setting `ruff format` actively rewrites `except (A, B):` into the
+  3.14-only unparenthesized form — the formatter introduced the regression
+  and would have re-introduced it on every format pass. `target-version`
+  is now `py312`, matching the declared support floor (hacs.json HA
+  2025.1.0 ran Python 3.12). mypy stays at 3.14 because it parses the
+  installed (current) HA source, which itself uses 3.14-only syntax.
+- **CI:** pytest now runs on a Python 3.13 + 3.14 matrix (3.13 resolves an
+  older HA test harness, so the suite also exercises an older Home
+  Assistant), and a new `syntax-floor` job compiles every module on
+  Python 3.12 so newer-than-floor syntax can never ship silently again.
+
 ## 0.6.2 — 2026-06-10
 
 Observability gap-fill (no functional changes).
