@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.2 — 2026-06-10
+
+Observability gap-fill (no functional changes).
+
+- `data_description` hover help on every config-flow field, including
+  treat-it-like-a-password framing for the viewToken.
+- CI and mypy/ruff targets moved to Python 3.14 — the latest Home
+  Assistant test harness requires ≥3.14, so a 3.13 pin silently tests
+  against months-old HA.
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
