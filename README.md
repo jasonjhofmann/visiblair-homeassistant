@@ -179,12 +179,12 @@ This integration aims to be public-grade reference quality:
 
 The integration tile has a **Download diagnostics** action that produces
 a sanitised JSON snapshot you can paste into a bug report. The
-`viewToken` and all other potentially-sensitive fields are
-auto-redacted; safe to share publicly.
+`viewToken`, the sensor's MAC address, and all other
+potentially-sensitive fields are auto-redacted; safe to share publicly.
 
 ## Compatibility
 
-- **Home Assistant 2024.12.0+** (declared in `hacs.json`)
+- **Home Assistant 2025.1.0+** (declared in `hacs.json`)
 - **VisiblAir Model E** firmware 1.7.2 confirmed in production
 - **VisiblAir Model E-Lite** should work — open an issue if it doesn't
 

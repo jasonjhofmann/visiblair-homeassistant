@@ -9,6 +9,9 @@ Produces a JSON dump suitable for pasting into a GitHub issue. Includes:
 Redacts:
 
 * ``view_token`` — the per-sensor share token from the entry data
+* The sensor MAC (``uuid``/``unique_id`` keys, plus its embedding in the
+  coordinator name) — HA diagnostics guidance treats MAC addresses as
+  data to redact.
 * All hypothetical-future-payload keys that VisiblAir's raw API response
   exposes (latitude/longitude, email, MQTT credentials, delegate accounts,
   associatedUserID) — we never include the raw payload today, but the
@@ -22,9 +25,9 @@ import dataclasses
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
-from homeassistant.components.diagnostics import async_redact_data
+from homeassistant.components.diagnostics import REDACTED, async_redact_data
 
-from .const import CONF_VIEW_TOKEN, DOMAIN
+from .const import CONF_UUID, CONF_VIEW_TOKEN, DOMAIN
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -36,6 +39,12 @@ if TYPE_CHECKING:
 REDACT: set[str] = {
     # Entry-data keys
     CONF_VIEW_TOKEN,
+    # The MAC address (HA diagnostics guidance: redact MACs). Covers
+    # config_entry.data.uuid, config_entry.unique_id and
+    # latest_reading.uuid; the coordinator name embeds the same MAC and
+    # is scrubbed by string replacement below.
+    CONF_UUID,
+    "unique_id",
     # Raw-API-response keys we never include today but would need to scrub
     # if a future revision attaches the raw payload to the diagnostics dump.
     "viewToken",
@@ -74,6 +83,13 @@ async def async_get_config_entry_diagnostics(
     coordinator = entry.runtime_data
     data = coordinator.data
 
+    # The coordinator name is f"{DOMAIN}_{MAC}" — scrub the MAC while
+    # keeping the surrounding structure visible for debugging.
+    mac = str(entry.data.get(CONF_UUID, ""))
+    coordinator_name = (
+        coordinator.name.replace(mac, REDACTED) if mac else coordinator.name
+    )
+
     payload: dict[str, Any] = {
         "integration_domain": DOMAIN,
         "config_entry": {
@@ -85,7 +101,7 @@ async def async_get_config_entry_diagnostics(
             "version": entry.version,
         },
         "coordinator": {
-            "name": coordinator.name,
+            "name": coordinator_name,
             "update_interval_seconds": (
                 coordinator.update_interval.total_seconds()
                 if coordinator.update_interval

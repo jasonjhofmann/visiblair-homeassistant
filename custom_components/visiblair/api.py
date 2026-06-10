@@ -24,8 +24,9 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, tzinfo
 from typing import TYPE_CHECKING, Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
@@ -209,7 +210,9 @@ def _normalise(raw: dict[str, Any]) -> VisiblAirSensorData:
             raw.get("firmwareVersion") or nested.get("firmwareVersion") or ""
         ),
         last_sample_at=_parse_iso8601(str(raw["lastSampleTimeStampRedis"])),
-        last_calibration_at=_parse_naive_local(raw.get("lastCalibration")),
+        last_calibration_at=_parse_naive_local(
+            raw.get("lastCalibration"), raw.get("tz")
+        ),
         co2_ppm=_as_int(raw.get("lastSampleCo2"))
         if raw.get("lastSampleCo2") is not None
         else _as_int(nested.get("co2")),
@@ -321,29 +324,57 @@ def _parse_iso8601(value: str) -> datetime:
     ``2026-05-26T20:50:29.032652926Z`` — nanosecond precision plus a ``Z``
     suffix. Python's :func:`datetime.fromisoformat` accepts ``Z`` natively
     from 3.11 onwards. We trim to microsecond precision (Python's max).
+
+    Raises:
+        VisiblAirParseError: the value is not a parseable timestamp.
+            Wrapped here so garbage from the wire surfaces through the
+            normal ``VisiblAirError`` channel instead of escaping as a
+            raw ``ValueError``.
     """
     trimmed = _trim_subsecond_precision(value)
-    parsed = datetime.fromisoformat(trimmed)
+    try:
+        parsed = datetime.fromisoformat(trimmed)
+    except ValueError as err:
+        raise VisiblAirParseError(
+            f"VisiblAir timestamp is not parseable: {value[:64]!r}"
+        ) from err
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=UTC)
     return parsed
 
 
-def _parse_naive_local(value: Any) -> datetime | None:
+def _parse_naive_local(value: Any, tz_name: Any = None) -> datetime | None:
     """Parse the API's other timestamp form (``"2026-05-24 21:14:31"``).
 
-    These naive strings are emitted in the sensor's local time zone; we
-    have no offset to anchor them precisely without the device's ``tz``
-    field. Returning naive UTC is the least-bad option — platforms get
-    something orderable, with a known caveat. Phase 2 may revisit once
-    the entity surface exposes timezone-aware diagnostic timestamps.
+    These naive strings are emitted in the sensor's local time zone. The
+    payload carries that zone in its ``tz`` field (an IANA name such as
+    ``America/Los_Angeles``), so we localise against it to recover the
+    true instant. Only when ``tz`` is missing or not a valid IANA name do
+    we fall back to stamping the naive string as UTC — orderable, but
+    offset by the device's UTC offset.
+
+    Raises:
+        VisiblAirParseError: the value is present but not a parseable
+            timestamp. Absent/empty values return ``None`` instead —
+            ``lastCalibration`` is legitimately empty on never-calibrated
+            devices.
     """
     if not isinstance(value, str) or not value:
         return None
+    zone: tzinfo = UTC
+    if isinstance(tz_name, str) and tz_name:
+        try:
+            zone = ZoneInfo(tz_name)
+        except (ZoneInfoNotFoundError, ValueError):
+            _LOGGER.debug(
+                "Device tz %r is not a valid IANA zone; assuming UTC", tz_name
+            )
     try:
-        return datetime.fromisoformat(value).replace(tzinfo=UTC)
-    except ValueError:
-        return None
+        return datetime.fromisoformat(value).replace(tzinfo=zone)
+    except ValueError as err:
+        raise VisiblAirParseError(
+            f"VisiblAir calibration timestamp is not parseable: {value[:64]!r}"
+        ) from err
 
 
 def _trim_subsecond_precision(value: str) -> str:

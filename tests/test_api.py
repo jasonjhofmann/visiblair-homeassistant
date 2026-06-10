@@ -9,7 +9,7 @@ coordinator wiring) live in a separate file in Phase 3.
 from __future__ import annotations
 
 import json
-from datetime import UTC
+from datetime import UTC, datetime
 
 import pytest
 
@@ -62,7 +62,10 @@ def test_normalise_full_payload(sensor_response_dict: dict) -> None:
 
     # Timestamps
     assert data.last_sample_at.tzinfo is not None
-    assert data.last_calibration_at is not None
+    # lastCalibration ("2026-05-24 21:14:31") is naive device-local time;
+    # the payload's tz (America/Los_Angeles, PDT = UTC-7 on that date)
+    # anchors it to the true instant.
+    assert data.last_calibration_at == datetime(2026, 5, 25, 4, 14, 31, tzinfo=UTC)
 
 
 def test_normalise_missing_nested_blob() -> None:
