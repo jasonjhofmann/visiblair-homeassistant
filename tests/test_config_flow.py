@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from unittest.mock import MagicMock
 
 import pytest
@@ -9,13 +10,21 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant_custom_component.test_util.aiohttp import (
+    AiohttpClientMocker,
+)
 
 from custom_components.visiblair.api import (
     VisiblAirAuthError,
     VisiblAirOfflineError,
     VisiblAirParseError,
 )
-from custom_components.visiblair.const import CONF_UUID, CONF_VIEW_TOKEN, DOMAIN
+from custom_components.visiblair.const import (
+    API_BASE_URL,
+    CONF_UUID,
+    CONF_VIEW_TOKEN,
+    DOMAIN,
+)
 
 from .conftest import TEST_VIEW_TOKEN, patch_apis
 
@@ -77,6 +86,30 @@ async def test_user_flow_validation_errors(
         )
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": expected}
+
+
+async def test_user_flow_garbage_timestamp_is_cannot_connect(
+    hass: HomeAssistant,
+    aioclient_mock: AiohttpClientMocker,
+    sensor_response_dict: dict,
+) -> None:
+    """A malformed wire timestamp shows cannot_connect, not "Unknown error".
+
+    Exercises the real API client end-to-end: the ValueError from
+    datetime.fromisoformat must be wrapped into VisiblAirParseError so
+    the flow's `except VisiblAirParseError` handler catches it.
+    """
+    sensor_response_dict["lastSampleTimeStampRedis"] = "not-a-timestamp"
+    aioclient_mock.get(API_BASE_URL, text=json.dumps(sensor_response_dict))
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_UUID: MAC_INPUT, CONF_VIEW_TOKEN: "tok"}
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "cannot_connect"}
 
 
 async def test_user_flow_aborts_on_duplicate(

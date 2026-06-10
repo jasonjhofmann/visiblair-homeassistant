@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.6.4 — 2026-06-10
+
+Audited bug-fix release: reauth damping, timezone-correct calibration
+timestamp, hardened timestamp parsing, MAC redaction in diagnostics.
+
+- **Fixed:** a single empty-200 response no longer fires an instant
+  reauth prompt. The API's catch-all returns the same empty 200 for *any*
+  server-side anomaly, so one transient hiccup used to halt polling and
+  demand re-authentication. The coordinator now requires **3 consecutive**
+  auth-classified failures before raising `ConfigEntryAuthFailed`; the
+  first two surface as ordinary `UpdateFailed` (entities briefly
+  unavailable). The counter resets on the first successful poll and is
+  persisted across setup retries, so a genuinely rotated token still
+  reaches the reauth prompt.
+- **Fixed:** the *Last calibration* timestamp was off by the device's UTC
+  offset (7–8 h for Pacific devices). The payload's naive
+  `lastCalibration` string is now localised using the payload's own `tz`
+  field (IANA name) before conversion; UTC stamping remains only as the
+  fallback for a missing/invalid `tz`.
+- **Fixed:** malformed timestamps from the wire no longer escape as raw
+  `ValueError` (which bypassed every `except VisiblAirError` handler and
+  showed "Unknown error" in the config/reauth/reconfigure flows). Both
+  timestamp parsers now wrap failures into `VisiblAirParseError`,
+  including the offending value (truncated).
+- **Fixed (privacy):** diagnostics dumps now redact the sensor MAC
+  everywhere it appears (entry data `uuid`, `unique_id`, the latest
+  reading's `uuid`, and the coordinator name) — making the README's
+  "safe to share publicly" claim true, per HA's diagnostics guidance on
+  MAC addresses.
+- **Fixed (docs):** README *Compatibility* now states the actual
+  hacs.json floor, Home Assistant **2025.1.0+** (it claimed 2024.12.0+).
+
 ## 0.6.3 — 2026-06-10
 
 Hotfix: restore compatibility with Python ≤ 3.13 (all Home Assistant

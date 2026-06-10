@@ -64,15 +64,36 @@ async def test_view_token_is_redacted(sensor_response_dict: dict) -> None:
     assert result["config_entry"]["data"][CONF_VIEW_TOKEN] == "**REDACTED**"
 
 
-async def test_uuid_and_other_metadata_survive(sensor_response_dict: dict) -> None:
-    """Non-sensitive metadata (uuid, model, firmware, readings) must round-trip."""
+async def test_mac_is_redacted_everywhere(sensor_response_dict: dict) -> None:
+    """The sensor MAC must not survive the dump in ANY location.
+
+    HA's diagnostics guidance lists MAC addresses as data to redact. The
+    MAC appears as entry data, unique_id, the latest reading's uuid, and
+    embedded in the coordinator name — all must be scrubbed.
+    """
+    data = _normalise(sensor_response_dict)
+    coordinator = _build_fake_coordinator(data)
+    entry = _build_fake_entry(coordinator)
+
+    result = await async_get_config_entry_diagnostics(MagicMock(), entry)
+    blob = json.dumps(result)
+
+    assert "AA:BB:CC:DD:EE:FF" not in blob, "MAC leaked into diagnostics output"
+    assert result["config_entry"]["data"][CONF_UUID] == "**REDACTED**"
+    assert result["config_entry"]["unique_id"] == "**REDACTED**"
+    assert result["latest_reading"]["uuid"] == "**REDACTED**"
+    # The coordinator name keeps its structure with the MAC scrubbed.
+    assert result["coordinator"]["name"] == "visiblair_**REDACTED**"
+
+
+async def test_other_metadata_survives(sensor_response_dict: dict) -> None:
+    """Non-sensitive metadata (model, firmware, readings) must round-trip."""
     data = _normalise(sensor_response_dict)
     coordinator = _build_fake_coordinator(data)
     entry = _build_fake_entry(coordinator)
 
     result = await async_get_config_entry_diagnostics(MagicMock(), entry)
 
-    assert result["config_entry"]["data"][CONF_UUID] == "AA:BB:CC:DD:EE:FF"
     assert result["coordinator"]["update_interval_seconds"] == 60
     assert result["coordinator"]["last_update_success"] is True
     # The dataclass round-tripped: a known fixture value should still be there.
@@ -90,6 +111,8 @@ def test_redact_set_includes_all_documented_keys() -> None:
     must_redact = {
         "view_token",
         "viewToken",
+        "uuid",
+        "unique_id",
         "latitude",
         "longitude",
         "email",

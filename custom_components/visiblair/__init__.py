@@ -24,7 +24,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import VisiblAirAPI
-from .const import CONF_UUID, CONF_VIEW_TOKEN
+from .const import CONF_UUID, CONF_VIEW_TOKEN, DOMAIN
 from .coordinator import VisiblAirCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -59,4 +59,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: VisiblAirConfigEntry) ->
 
 async def async_unload_entry(hass: HomeAssistant, entry: VisiblAirConfigEntry) -> bool:
     """Unload a config entry."""
+    # Drop this entry's consecutive-auth-failure count (see coordinator.py).
+    hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

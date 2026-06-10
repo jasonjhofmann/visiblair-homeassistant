@@ -308,6 +308,8 @@ All `diagnostic` entity category. Sourced from nested `lastSampleDataRedis`.
 the raw API response with these fields redacted:
 
 - `viewToken`
+- `uuid` / `unique_id` (the sensor MAC, including its embedding in the
+  coordinator name)
 - `latitude`, `longitude`
 - `email.String`
 - `MQTTPassword`, `MQTTUsername`, `MQTTCert`
@@ -322,7 +324,12 @@ the raw API response with these fields redacted:
 - **Backoff:** standard `DataUpdateCoordinator` exponential backoff on
   consecutive `UpdateFailed`s.
 - **Auth failure** (response is empty 200 on a previously-working entry):
-  raise `ConfigEntryAuthFailed` → HA triggers the reauth flow.
+  because the catch-all answers *any* server-side anomaly with the same
+  empty 200, a single occurrence is treated as a transient `UpdateFailed`;
+  only after 3 consecutive auth-classified failures does the coordinator
+  raise `ConfigEntryAuthFailed` → HA triggers the reauth flow. The counter
+  (persisted in `hass.data`, so it survives setup retries) resets on the
+  first successful poll.
 - **Offline** (response 5xx, connection error, or empty status line):
   raise `UpdateFailed`. Entities go unavailable. Coordinator keeps
   trying on cadence.
