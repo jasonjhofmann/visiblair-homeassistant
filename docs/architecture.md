@@ -11,8 +11,11 @@ to reach these conclusions.
 > **Note (post-Phase-4 update):** the entity-naming table in
 > [§ Entity map](#entity-map) below reflects the *current* shipped naming
 > (after the v0.4.0 µm-suffix-removal correction), not the original
-> Phase-0 draft. The API-surface, defensive-parsing, and config-flow
-> sections are unchanged from the frozen record. See [CHANGELOG.md](../CHANGELOG.md)
+> Phase-0 draft. The config-flow, parsing-fallback, health-flag, and
+> diagnostics sections have likewise been updated to match shipped
+> behavior (options-flow removal in v0.5.0; tri-state health flags and
+> the parse-to-None nested fallback in v0.7.0). The API-surface research
+> is unchanged from the frozen record. See [CHANGELOG.md](../CHANGELOG.md)
 > for the iteration history.
 
 ## Upstream system: VisiblAir
@@ -132,10 +135,16 @@ to consume, but the nested blob has richer values (sub-second precision,
 extra fault flags).
 
 **Integration choice:** read top-level convenience fields where they
-exist; fall back to parsing `lastSampleDataRedis` for fields that only
-appear there (`PMFanFail`, `PMLaserFail`, `PMRhtError`,
+*parse to a value* — they arrive as strings, so an empty string counts
+as absent and the nested `lastSampleDataRedis` value is consulted (not
+only when the key itself is missing). Fields that only appear in the
+nested blob (`PMFanFail`, `PMLaserFail`, `PMRhtError`,
 `PMGasSensorError`, `PMFanCleaning`, `PMFanSpeedWarning`,
-`firmwareVersion`).
+`firmwareVersion`) are parsed from it directly. The hardware-health and
+power flags are tri-state: when the blob is missing or unparseable they
+are *unreported* (`None`) and their binary sensors go **unavailable** —
+never defaulted to `false`, which would mask a real fault as "no
+fault".
 
 ## Local API: documented but not used
 
@@ -181,7 +190,7 @@ visiblair-homeassistant/
 ├── custom_components/
 │   └── visiblair/           (Phase 1+)
 │       ├── __init__.py      (async_setup_entry, async_unload_entry)
-│       ├── config_flow.py   (add-sensor + reauth + options)
+│       ├── config_flow.py   (add-sensor + reauth + reconfigure)
 │       ├── const.py
 │       ├── coordinator.py   (DataUpdateCoordinator subclass)
 │       ├── api.py           (aiohttp wrapper for the one endpoint, defensive parser)
@@ -220,17 +229,20 @@ for a previously-working entry (token rotated by the user from the
 VisiblAir portal). The flow prompts for a new `view_token` only — MAC
 stays put.
 
-An **options flow** exposes:
-
-- `scan_interval` (30–600 s, default 60 s)
+There is **no options flow**. An earlier revision exposed
+`scan_interval` (30–600 s), but it was removed in v0.5.0: HA Core
+convention is that the integration owns its poll cadence, so the
+interval is fixed at 60 s (`DEFAULT_SCAN_INTERVAL`), matching the
+sensors' factory sample rate. A **reconfigure flow** lets the user
+update the viewToken without removing the entry.
 
 ### Coordinator
 
-One `DataUpdateCoordinator` instance per config entry (per sensor).
-60-second default cadence, configurable via options flow. Coordinator
-calls into the API wrapper, normalizes the response (parsing the
-nested `lastSampleDataRedis` JSON string), and exposes a typed dict to
-the platform entities.
+One `DataUpdateCoordinator` instance per config entry (per sensor),
+polling at the fixed 60-second cadence (not user-configurable).
+Coordinator calls into the API wrapper, normalizes the response
+(parsing the nested `lastSampleDataRedis` JSON string), and exposes a
+typed `VisiblAirSensorData` snapshot to the platform entities.
 
 The API wrapper raises domain-specific exceptions
 (`VisiblAirAuthError`, `VisiblAirOfflineError`,
@@ -281,7 +293,12 @@ grouping in the dashboard; the size is self-evident.
 
 #### Binary sensor entities
 
-All `diagnostic` entity category. Sourced from nested `lastSampleDataRedis`.
+Sourced from the nested `lastSampleDataRedis` blob (with top-level
+fallbacks for the power pair). The hardware-health flags carry the
+`diagnostic` entity category; `ac_connected`/`charging` are
+user-relevant and do not. All eight are tri-state: when the flag is
+unreported (blob missing/unparseable) the entity is **unavailable**
+rather than `off` — see the parsing rules above.
 
 | Entity suffix | Source field | Device class |
 |---|---|---|
@@ -304,15 +321,19 @@ All `diagnostic` entity category. Sourced from nested `lastSampleDataRedis`.
 
 ### Diagnostics
 
-`diagnostics.py` provides an HA "Download diagnostics" handler returning
-the raw API response with these fields redacted:
+`diagnostics.py` provides an HA "Download diagnostics" handler. It does
+**not** return the raw API response — it returns a normalised snapshot:
+config-entry metadata, coordinator status (cadence, last-update result),
+and the typed `VisiblAirSensorData` latest reading. These fields are
+redacted at any depth (the raw-payload keys are listed defensively, in
+case a future revision ever attaches the raw response):
 
-- `viewToken`
+- `view_token` / `viewToken`
 - `uuid` / `unique_id` (the sensor MAC, including its embedding in the
   coordinator name)
 - `latitude`, `longitude`
-- `email.String`
-- `MQTTPassword`, `MQTTUsername`, `MQTTCert`
+- `email`
+- `MQTTPassword`, `MQTTUsername`, `MQTTCert`, `MQTTEndpoint`, `MQTTTopic`
 - `delegateAccounts`, `delegatedAccounts`
 - `associatedUserID`
 

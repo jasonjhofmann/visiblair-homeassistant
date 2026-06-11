@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, tzinfo
 from typing import TYPE_CHECKING, Any
@@ -37,6 +38,14 @@ from .const import API_BASE_URL, REQUIRED_RESPONSE_FIELDS
 
 _LOGGER = logging.getLogger(__name__)
 _TIMEOUT = aiohttp.ClientTimeout(total=15)
+
+# Excerpts of non-JSON error bodies are embedded in VisiblAirParseError
+# messages, which flow into UpdateFailed placeholders and config-flow
+# WARNING logs. A captive portal / proxy that echoes the request URL back
+# in its error page would put the viewToken in that excerpt — scrub both
+# the configured token and any generic ``viewToken=…`` query pattern.
+_TOKEN_QUERY_RE = re.compile(r"(viewToken=)[^&\s'\"<>]+", re.IGNORECASE)
+_REDACTED = "**REDACTED**"
 
 
 class VisiblAirError(Exception):
@@ -100,19 +109,25 @@ class VisiblAirSensorData:
     pm_5_0_um: float | None
     pm_10_0_um: float | None
 
+    # Power state and hardware health are tri-state: ``None`` means the
+    # payload didn't report the flag at all (the ``lastSampleDataRedis``
+    # blob that carries it was missing or unparseable). Defaulting these
+    # to False would silently mask a real fault as "no fault" — platforms
+    # mark the corresponding entities unavailable on None instead.
+
     # Power
     battery_pct: float | None
     battery_voltage: float | None
-    ac_connected: bool
-    charging: bool
+    ac_connected: bool | None
+    charging: bool | None
 
     # Hardware health
-    pm_fan_fail: bool
-    pm_laser_fail: bool
-    pm_rht_error: bool
-    pm_gas_sensor_error: bool
-    pm_fan_cleaning: bool
-    pm_fan_speed_warning: bool
+    pm_fan_fail: bool | None
+    pm_laser_fail: bool | None
+    pm_rht_error: bool | None
+    pm_gas_sensor_error: bool | None
+    pm_fan_cleaning: bool | None
+    pm_fan_speed_warning: bool | None
 
 
 class VisiblAirAPI:
@@ -176,7 +191,10 @@ class VisiblAirAPI:
         try:
             data = json.loads(body)
         except json.JSONDecodeError as err:
-            preview = body[:120].replace("\n", " ")
+            # Redact BEFORE truncating so a token straddling the cut
+            # can't partially survive (README: "viewToken is never
+            # logged at any level" — this excerpt reaches logs).
+            preview = self._redact_token(body).replace("\n", " ")[:120]
             raise VisiblAirParseError(
                 f"VisiblAir response is not JSON: {preview!r}"
             ) from err
@@ -193,6 +211,17 @@ class VisiblAirAPI:
             )
 
         return data
+
+    def _redact_token(self, text: str) -> str:
+        """Scrub the viewToken from server-controlled text before embedding.
+
+        Covers the configured token verbatim plus any ``viewToken=…``
+        query pattern (case-insensitive), so even a token we did not
+        send — e.g. echoed by an intermediary — can't reach the logs.
+        """
+        if self._view_token:
+            text = text.replace(self._view_token, _REDACTED)
+        return _TOKEN_QUERY_RE.sub(rf"\1{_REDACTED}", text)
 
 
 # ---- normalisation ---------------------------------------------------------
@@ -213,15 +242,17 @@ def _normalise(raw: dict[str, Any]) -> VisiblAirSensorData:
         last_calibration_at=_parse_naive_local(
             raw.get("lastCalibration"), raw.get("tz")
         ),
-        co2_ppm=_as_int(raw.get("lastSampleCo2"))
-        if raw.get("lastSampleCo2") is not None
-        else _as_int(nested.get("co2")),
-        temperature_c=_as_float(raw.get("lastSampleTemperature"))
-        if raw.get("lastSampleTemperature") is not None
-        else _as_float(nested.get("temperature")),
-        humidity_pct=_as_float(raw.get("lastSampleHumidity"))
-        if raw.get("lastSampleHumidity") is not None
-        else _as_float(nested.get("humidity")),
+        # Top-level gauges are strings on the wire; an empty string
+        # parses to None, so the nested fallback must be consulted
+        # whenever the top-level value PARSES to nothing — not only
+        # when the raw key is absent (see _first_int).
+        co2_ppm=_first_int(raw.get("lastSampleCo2"), nested.get("co2")),
+        temperature_c=_first_float(
+            raw.get("lastSampleTemperature"), nested.get("temperature")
+        ),
+        humidity_pct=_first_float(
+            raw.get("lastSampleHumidity"), nested.get("humidity")
+        ),
         voc_index=_as_int(_nullable_field(raw.get("lastSampleVocIndex"), "Int64"))
         if isinstance(raw.get("lastSampleVocIndex"), dict)
         else _as_int(nested.get("voc")),
@@ -246,14 +277,16 @@ def _normalise(raw: dict[str, Any]) -> VisiblAirSensorData:
         )
         if isinstance(raw.get("lastSampleBattVoltage"), dict)
         else _as_float(nested.get("battVoltage")),
-        ac_connected=bool(raw.get("lastSampleIsACIN", nested.get("isACIN", False))),
-        charging=bool(raw.get("lastSampleIsCharging", nested.get("isCharging", False))),
-        pm_fan_fail=bool(nested.get("PMFanFail", False)),
-        pm_laser_fail=bool(nested.get("PMLaserFail", False)),
-        pm_rht_error=bool(nested.get("PMRhtError", False)),
-        pm_gas_sensor_error=bool(nested.get("PMGasSensorError", False)),
-        pm_fan_cleaning=bool(nested.get("PMFanCleaning", False)),
-        pm_fan_speed_warning=bool(nested.get("PMFanSpeedWarning", False)),
+        # Tri-state flags: an unreported flag stays None (entity goes
+        # unavailable) rather than masquerading as False / "no fault".
+        ac_connected=_as_bool(raw.get("lastSampleIsACIN", nested.get("isACIN"))),
+        charging=_as_bool(raw.get("lastSampleIsCharging", nested.get("isCharging"))),
+        pm_fan_fail=_as_bool(nested.get("PMFanFail")),
+        pm_laser_fail=_as_bool(nested.get("PMLaserFail")),
+        pm_rht_error=_as_bool(nested.get("PMRhtError")),
+        pm_gas_sensor_error=_as_bool(nested.get("PMGasSensorError")),
+        pm_fan_cleaning=_as_bool(nested.get("PMFanCleaning")),
+        pm_fan_speed_warning=_as_bool(nested.get("PMFanSpeedWarning")),
     )
 
 
@@ -297,6 +330,42 @@ def _first_pm(
     if nested_key in nested:
         return _as_float(nested.get(nested_key))
     return None
+
+
+def _first_int(*values: Any) -> int | None:
+    """First value that *parses* to an int — not the first non-None raw value.
+
+    The top-level convenience gauges arrive as strings; an empty string
+    parses to None, so gating the nested fallback on the raw key being
+    None would ignore a perfectly valid nested value and leave the
+    entity unknown despite data being present.
+    """
+    for value in values:
+        parsed = _as_int(value)
+        if parsed is not None:
+            return parsed
+    return None
+
+
+def _first_float(*values: Any) -> float | None:
+    """Float twin of :func:`_first_int`."""
+    for value in values:
+        parsed = _as_float(value)
+        if parsed is not None:
+            return parsed
+    return None
+
+
+def _as_bool(value: Any) -> bool | None:
+    """Coerce to bool, preserving None as "flag not reported".
+
+    Distinguishes "device reported no fault" (False) from "the blob
+    carrying this flag is missing" (None). Defaulting to False here
+    would silently report OK while the hardware could be faulting.
+    """
+    if value is None:
+        return None
+    return bool(value)
 
 
 def _as_int(value: Any) -> int | None:

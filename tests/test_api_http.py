@@ -110,6 +110,51 @@ async def test_fetch_garbage_timestamp_is_parse_error(
         await _make_api(hass).fetch_latest()
 
 
+async def test_parse_error_redacts_view_token(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    """A non-JSON body echoing the request URL must not leak the viewToken.
+
+    Captive portals/proxies commonly embed the requested URL in their
+    HTML error page; the body excerpt lands in VisiblAirParseError →
+    UpdateFailed placeholders and config-flow WARNING logs. The README
+    claims the viewToken is never logged at any level — enforce it.
+    """
+    token = "f00dfeedcafe"
+    body = (
+        "<html>Blocked: https://api.visiblair.com:11000/api/v1/sensor"
+        f"?uuid=AA:BB:CC:DD:EE:FF&viewToken={token} </html>"
+    )
+    aioclient_mock.get(API_BASE_URL, text=body)
+    api = VisiblAirAPI(
+        session=async_get_clientsession(hass),
+        uuid="AA:BB:CC:DD:EE:FF",
+        view_token=token,
+    )
+    with pytest.raises(VisiblAirParseError) as exc:
+        await api.fetch_latest()
+    message = str(exc.value)
+    assert token not in message
+    assert "REDACTED" in message
+
+
+async def test_parse_error_redacts_any_view_token_pattern(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    """Even a token we did NOT configure is scrubbed via the query pattern.
+
+    Defense in depth: an intermediary may echo a rewritten/different
+    ``viewToken=…`` parameter (any casing) — redact those too.
+    """
+    body = "<html>see http://proxy/login?next=/x%3FVIEWTOKEN=deadbeef99&y=1</html>"
+    aioclient_mock.get(API_BASE_URL, text=body)
+    with pytest.raises(VisiblAirParseError) as exc:
+        await _make_api(hass).fetch_latest()
+    message = str(exc.value)
+    assert "deadbeef99" not in message
+    assert "REDACTED" in message
+
+
 def test_as_int_edges() -> None:
     assert _as_int(None) is None
     assert _as_int("") is None

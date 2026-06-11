@@ -16,7 +16,7 @@ from .api import (
     VisiblAirError,
     VisiblAirSensorData,
 )
-from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
+from .const import CONF_UUID, DEFAULT_SCAN_INTERVAL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,6 +49,13 @@ class VisiblAirCoordinator(DataUpdateCoordinator[VisiblAirSensorData]):
         )
         self._api = api
         self._entry_id = entry.entry_id
+        # Canonical (uppercase) sensor MAC, sourced from the config entry —
+        # never from the cloud response. Entity unique_ids derive from this
+        # so a cloud-side casing change can't orphan registered entities.
+        # entry.unique_id and entry.data[CONF_UUID] hold the same
+        # canonicalised value; the data key covers the (theoretical)
+        # unique_id-less entry for type narrowing.
+        self.canonical_uuid: str = entry.unique_id or entry.data[CONF_UUID]
 
     @property
     def _auth_failure_store(self) -> dict[str, int]:

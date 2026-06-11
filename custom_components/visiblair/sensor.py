@@ -270,9 +270,14 @@ class VisiblAirSensor(CoordinatorEntity[VisiblAirCoordinator], SensorEntity):
     ) -> None:
         super().__init__(coordinator)
         self.entity_description = description
-        data = coordinator.data
-        self._attr_unique_id = f"{DOMAIN}_{data.uuid}_{description.key}"
-        self._attr_device_info = device_info_for(data)
+        # unique_id derives from the entry's canonical (uppercase) MAC,
+        # NOT the cloud-echoed coordinator.data.uuid — identical bytes
+        # today, but immune to a cloud-side casing change orphaning
+        # every registered entity.
+        self._attr_unique_id = (
+            f"{DOMAIN}_{coordinator.canonical_uuid}_{description.key}"
+        )
+        self._attr_device_info = device_info_for(coordinator.data)
 
     @property
     def native_value(self) -> Any:
