@@ -11,11 +11,13 @@ from homeassistant.const import (
     EntityCategory,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.visiblair.api import VisiblAirSensorData
 from custom_components.visiblair.const import CONF_UUID, CONF_VIEW_TOKEN, DOMAIN
+from custom_components.visiblair.sensor import device_info_for
 
 from .conftest import (
     TEST_VIEW_TOKEN,
@@ -111,6 +113,60 @@ async def test_unique_id_uses_entry_canonical_mac(
     assert ent_reg.async_get_entity_id(
         "binary_sensor", DOMAIN, "visiblair_AA:BB:CC:DD:EE:FF_pm_fan_fail"
     )
+
+
+async def test_device_registry_key_literals(
+    hass: HomeAssistant, init_integration: MockConfigEntry
+) -> None:
+    """Lock the exact registry-keying bytes DeviceInfo emits today.
+
+    Existing installs key their device on these literal tuples — any
+    change (casing included) mints a NEW device and orphans the old one,
+    so they are asserted byte-for-byte, not derived.
+    """
+    device_info = device_info_for(init_integration.runtime_data)
+    assert device_info["identifiers"] == {("visiblair", "AA:BB:CC:DD:EE:FF")}
+    assert device_info["connections"] == {("mac", "aa:bb:cc:dd:ee:ff")}
+
+    device_reg = dr.async_get(hass)
+    device = device_reg.async_get_device(
+        identifiers={("visiblair", "AA:BB:CC:DD:EE:FF")}
+    )
+    assert device is not None
+    assert device.connections == {("mac", "aa:bb:cc:dd:ee:ff")}
+
+
+async def test_device_info_survives_lowercase_cloud_echo(
+    hass: HomeAssistant, sample_data: VisiblAirSensorData
+) -> None:
+    """A lowercase cloud echo yields the exact same DeviceInfo registry keys.
+
+    Same hazard as entity unique_ids, device-registry edition: if
+    identifiers/connections derived from the cloud-echoed ``data.uuid``,
+    a cloud-side casing change would mint a NEW device and orphan the
+    registered one. They derive from the entry's canonical MAC instead.
+    """
+    lowered = dataclasses.replace(sample_data, uuid="aa:bb:cc:dd:ee:ff")
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title=lowered.description,
+        data={CONF_UUID: "AA:BB:CC:DD:EE:FF", CONF_VIEW_TOKEN: TEST_VIEW_TOKEN},
+        unique_id="AA:BB:CC:DD:EE:FF",
+    )
+    await setup_integration(hass, entry, build_mock_api(lowered))
+
+    # Byte-identical to the uppercase-echo literals above.
+    device_info = device_info_for(entry.runtime_data)
+    assert device_info["identifiers"] == {("visiblair", "AA:BB:CC:DD:EE:FF")}
+    assert device_info["connections"] == {("mac", "aa:bb:cc:dd:ee:ff")}
+
+    # The registry holds exactly one device for the entry — keyed on the
+    # canonical tuples — so the casing flip minted nothing new.
+    device_reg = dr.async_get(hass)
+    devices = dr.async_entries_for_config_entry(device_reg, entry.entry_id)
+    assert len(devices) == 1
+    assert devices[0].identifiers == {("visiblair", "AA:BB:CC:DD:EE:FF")}
+    assert ("mac", "aa:bb:cc:dd:ee:ff") in devices[0].connections
 
 
 async def test_firmware_is_diagnostic(

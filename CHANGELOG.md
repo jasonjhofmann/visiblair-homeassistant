@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.1 — 2026-06-10
+
+- **Fixed (robustness):** device-registry identifiers/connections now
+  derive from the config entry's canonical (uppercase) MAC instead of
+  the cloud-echoed `uuid` — the device-registry edition of 0.7.0's
+  unique_id fix. The emitted tuples are byte-identical to before
+  (`(visiblair, <UPPERCASE MAC>)` identifier, `format_mac`-lowercased
+  `mac` connection — locked by test, no migration), but a cloud-side
+  casing change can no longer mint a duplicate device and orphan the
+  registered one. The fallback device name (used only when the cloud
+  reports no description) now also uses the canonical MAC.
+
 ## 0.7.0 — 2026-06-10
 
 Audited adjacent-issue sweep. Contains one **entity behavior change**
