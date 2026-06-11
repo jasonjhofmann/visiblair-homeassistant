@@ -71,8 +71,9 @@ def test_normalise_full_payload(sensor_response_dict: dict) -> None:
 def test_normalise_missing_nested_blob() -> None:
     """A payload without ``lastSampleDataRedis`` still normalises.
 
-    The hardware-health booleans default to False (no fault reported);
-    top-level convenience fields supply the gauges.
+    The hardware-health and power flags are *unreported* (None) — the
+    blob that carries them is absent, so defaulting to False would mask
+    a real fault as OK. Top-level convenience fields supply the gauges.
     """
     minimal = {
         "uuid": "AA:BB:CC:DD:EE:FF",
@@ -88,10 +89,38 @@ def test_normalise_missing_nested_blob() -> None:
     data = _normalise(minimal)
     assert data.co2_ppm == 500
     assert data.temperature_c == pytest.approx(21.0)
-    assert data.pm_fan_fail is False
+    assert data.pm_fan_fail is None
+    assert data.pm_fan_speed_warning is None
+    assert data.ac_connected is None
+    assert data.charging is None
     assert data.voc_index is None
     assert data.pm_0_1_um is None
     assert data.last_calibration_at is None
+
+
+def test_normalise_empty_string_top_level_falls_back_to_nested() -> None:
+    """An empty-string top-level gauge must not mask a populated nested value.
+
+    The API sends CO₂/temperature/humidity as strings; ``""`` parses to
+    None. The nested fallback must kick in whenever the top-level value
+    PARSES to None — not only when the raw key is absent — otherwise the
+    entity goes unknown despite valid data sitting in the blob.
+    """
+    payload = {
+        "uuid": "AA:BB:CC:DD:EE:FF",
+        "description": "",
+        "lastSampleTimeStampRedis": "2026-05-26T20:50:29Z",
+        "lastSampleCo2": "",
+        "lastSampleTemperature": "",
+        "lastSampleHumidity": "",
+        "lastSampleDataRedis": json.dumps(
+            {"co2": 612, "temperature": 21.5, "humidity": 44.0}
+        ),
+    }
+    data = _normalise(payload)
+    assert data.co2_ppm == 612
+    assert data.temperature_c == pytest.approx(21.5)
+    assert data.humidity_pct == pytest.approx(44.0)
 
 
 def test_normalise_nullable_wrapper_invalid() -> None:
@@ -128,6 +157,9 @@ def test_normalise_nested_blob_with_extra_pm_only_in_nested() -> None:
     assert data.pm_4_0_um == pytest.approx(1.25)
     assert data.pm_fan_fail is True
     assert data.ac_connected is True
+    # A flag absent from an otherwise-valid blob is unreported, not False.
+    assert data.pm_laser_fail is None
+    assert data.charging is None
 
 
 def test_normalise_garbage_nested_blob_is_swallowed() -> None:
@@ -139,7 +171,7 @@ def test_normalise_garbage_nested_blob_is_swallowed() -> None:
         "lastSampleDataRedis": "not valid json {",
     }
     data = _normalise(payload)
-    assert data.pm_fan_fail is False  # default
+    assert data.pm_fan_fail is None  # unreported — blob unparseable
     assert data.co2_ppm is None
 
 

@@ -33,7 +33,8 @@ def _build_fake_entry(coordinator: SimpleNamespace) -> SimpleNamespace:
             CONF_UUID: "AA:BB:CC:DD:EE:FF",
             CONF_VIEW_TOKEN: "supersecret",
         },
-        options={"scan_interval": 60},
+        # No options — the OptionsFlow (scan_interval) was removed in 0.5.0.
+        options={},
         unique_id="AA:BB:CC:DD:EE:FF",
         version=1,
         runtime_data=coordinator,

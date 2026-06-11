@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import dataclasses
+
 import pytest
 from homeassistant.const import (
     ATTR_UNIT_OF_MEASUREMENT,
@@ -12,9 +14,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.visiblair.const import DOMAIN
+from custom_components.visiblair.api import VisiblAirSensorData
+from custom_components.visiblair.const import CONF_UUID, CONF_VIEW_TOKEN, DOMAIN
 
-from .conftest import state_for, uid
+from .conftest import (
+    TEST_VIEW_TOKEN,
+    build_mock_api,
+    setup_integration,
+    state_for,
+    uid,
+)
 
 # Keys disabled by default (niche PM sizes + battery_voltage).
 DISABLED_KEYS = {
@@ -69,6 +78,39 @@ async def test_entity_counts(
     assert len(sensors) == 18
     enabled = [e for e in sensors if e.disabled_by is None]
     assert len(enabled) == 18 - len(DISABLED_KEYS)
+
+
+async def test_unique_id_uses_entry_canonical_mac(
+    hass: HomeAssistant, sample_data: VisiblAirSensorData
+) -> None:
+    """unique_ids derive from the entry's canonical MAC — byte-identical to before.
+
+    The cloud echoes the uuid in whatever casing it stores; if entities
+    derived their unique_id from that echo, a cloud-side casing change
+    would orphan every registered entity. Lock the exact format (so
+    existing installs never migrate) and prove a lowercase cloud echo
+    changes nothing.
+    """
+    # The exact pre-0.7.0 unique_id, locked byte-for-byte.
+    assert uid("co2") == "visiblair_AA:BB:CC:DD:EE:FF_co2"
+
+    # Simulate the cloud changing its casing: API data carries lowercase.
+    lowered = dataclasses.replace(sample_data, uuid="aa:bb:cc:dd:ee:ff")
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title=lowered.description,
+        data={CONF_UUID: "AA:BB:CC:DD:EE:FF", CONF_VIEW_TOKEN: TEST_VIEW_TOKEN},
+        unique_id="AA:BB:CC:DD:EE:FF",
+    )
+    await setup_integration(hass, entry, build_mock_api(lowered))
+
+    ent_reg = er.async_get(hass)
+    assert ent_reg.async_get_entity_id(
+        "sensor", DOMAIN, "visiblair_AA:BB:CC:DD:EE:FF_co2"
+    )
+    assert ent_reg.async_get_entity_id(
+        "binary_sensor", DOMAIN, "visiblair_AA:BB:CC:DD:EE:FF_pm_fan_fail"
+    )
 
 
 async def test_firmware_is_diagnostic(

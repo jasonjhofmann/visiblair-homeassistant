@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.7.0 — 2026-06-10
+
+Audited adjacent-issue sweep. Contains one **entity behavior change**
+(tri-state hardware-health/power flags) — hence the minor bump.
+
+- **⚠️ BEHAVIOR CHANGE:** the six PM hardware-health flags plus
+  *AC connected* / *Charging* binary sensors are now tri-state. When the
+  payload's `lastSampleDataRedis` blob is missing or unparseable the
+  flag is *unreported* and the entity goes **unavailable** instead of
+  reporting `off` — previously a missing blob silently masked a real
+  fault as "no fault". *Unavailable* (rather than *unknown*) is
+  deliberate: HA semantics are "unknown = not yet known" vs
+  "unavailable = the backing data source can't currently provide the
+  value", and an absent blob is the latter. Automations that trigger on
+  these entities' `off` state may need a `not from: unavailable` guard.
+- **Fixed:** an empty-string top-level gauge value no longer hides valid
+  nested data. `lastSampleCo2` / `lastSampleTemperature` /
+  `lastSampleHumidity` arrive as strings, and `""` parses to None — the
+  nested `lastSampleDataRedis` fallback now kicks in whenever the
+  top-level value *parses* to nothing, not only when the key is absent,
+  so the entity no longer goes unknown while data sits in the blob.
+- **Fixed (robustness):** entity unique_ids now derive from the config
+  entry's canonical (uppercase) MAC instead of whatever casing the cloud
+  echoes back. The generated ids are byte-identical to before
+  (`visiblair_<MAC>_<key>` — locked by test, no migration), but a
+  cloud-side casing change can no longer orphan every registered entity.
+- **Fixed (privacy):** excerpts of non-JSON error bodies (which reach
+  WARNING/ERROR logs via config-flow warnings and `UpdateFailed`) now
+  have the configured viewToken — and any `viewToken=…` query pattern an
+  intermediary might echo — redacted before embedding, keeping the
+  README's "viewToken is never logged at any level" claim airtight even
+  behind a captive portal or URL-echoing proxy.
+- **Fixed (tests):** dropped a stale `options={"scan_interval": 60}`
+  from the diagnostics test fixture — it mimicked the options flow
+  removed in 0.5.0.
+- **Fixed (docs):** `docs/architecture.md` no longer documents the
+  removed options flow, no longer claims diagnostics returns "the raw
+  API response" (it returns a normalised snapshot), aligns the
+  documented redact list with the code, and documents the
+  parse-to-None nested fallback and tri-state health-flag semantics
+  introduced above.
+
 ## 0.6.4 — 2026-06-10
 
 Audited bug-fix release: reauth damping, timezone-correct calibration

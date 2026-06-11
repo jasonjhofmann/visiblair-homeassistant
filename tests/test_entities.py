@@ -120,7 +120,12 @@ def test_sensor_value_fns_against_fixture(sensor_response_dict: dict) -> None:
 
 
 def test_binary_sensor_value_fns_against_fixture(sensor_response_dict: dict) -> None:
-    """Every binary-sensor value_fn must return a bool."""
+    """Every binary-sensor value_fn returns a real bool for a full payload.
+
+    (The flags are tri-state — None when unreported; that path is covered
+    in test_api.py / test_binary_sensor.py. The full fixture reports all
+    eight, so here every extractor must produce an actual bool.)
+    """
     data = _normalise(sensor_response_dict)
     for desc in BINARY_SENSOR_DESCRIPTIONS:
         value = desc.value_fn(data)

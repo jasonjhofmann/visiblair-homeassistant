@@ -6,6 +6,14 @@ Two flavours:
 * **Hardware health** — fan/laser/sensor fault flags reported by the PM
   subsystem. All flagged ``entity_category=DIAGNOSTIC`` so they live in
   the Diagnostic section of the device page.
+
+All flags are tri-state: the API only carries them inside the
+``lastSampleDataRedis`` blob, and when that blob is missing or
+unparseable the flag is *unreported* (``None``). The entity then goes
+**unavailable** — deliberately unavailable rather than unknown: HA's
+semantics are "unknown = not yet known", "unavailable = the backing
+data source can't currently provide the value", and an absent blob is
+the latter. Reporting ``off`` would silently mask a real fault as OK.
 """
 
 from __future__ import annotations
@@ -39,9 +47,13 @@ PARALLEL_UPDATES = 0
 
 @dataclass(frozen=True, kw_only=True)
 class VisiblAirBinarySensorEntityDescription(BinarySensorEntityDescription):
-    """Binary-sensor description with a typed boolean extractor."""
+    """Binary-sensor description with a typed tri-state extractor.
 
-    value_fn: Callable[[VisiblAirSensorData], bool]
+    ``None`` means the payload didn't report the flag (see module
+    docstring) — the entity goes unavailable, not off.
+    """
+
+    value_fn: Callable[[VisiblAirSensorData], bool | None]
 
 
 BINARY_SENSOR_DESCRIPTIONS: tuple[VisiblAirBinarySensorEntityDescription, ...] = (
@@ -133,10 +145,29 @@ class VisiblAirBinarySensor(
     ) -> None:
         super().__init__(coordinator)
         self.entity_description = description
-        data = coordinator.data
-        self._attr_unique_id = f"{DOMAIN}_{data.uuid}_{description.key}"
-        self._attr_device_info = device_info_for(data)
+        # unique_id derives from the entry's canonical (uppercase) MAC,
+        # NOT the cloud-echoed coordinator.data.uuid — identical bytes
+        # today, but immune to a cloud-side casing change orphaning
+        # every registered entity.
+        self._attr_unique_id = (
+            f"{DOMAIN}_{coordinator.canonical_uuid}_{description.key}"
+        )
+        self._attr_device_info = device_info_for(coordinator.data)
 
     @property
-    def is_on(self) -> bool:
+    def available(self) -> bool:
+        """Unavailable when the flag is unreported in the latest payload.
+
+        Deliberate choice of *unavailable* over *unknown* (returning
+        None from is_on): the flag's backing data feed — the
+        ``lastSampleDataRedis`` blob — is absent, which matches HA's
+        unavailable semantic; unknown is for values not *yet* known.
+        """
+        return (
+            super().available
+            and self.entity_description.value_fn(self.coordinator.data) is not None
+        )
+
+    @property
+    def is_on(self) -> bool | None:
         return self.entity_description.value_fn(self.coordinator.data)
