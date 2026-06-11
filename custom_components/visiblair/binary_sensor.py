@@ -152,7 +152,7 @@ class VisiblAirBinarySensor(
         self._attr_unique_id = (
             f"{DOMAIN}_{coordinator.canonical_uuid}_{description.key}"
         )
-        self._attr_device_info = device_info_for(coordinator.data)
+        self._attr_device_info = device_info_for(coordinator)
 
     @property
     def available(self) -> bool:

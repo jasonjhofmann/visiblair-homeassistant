@@ -251,9 +251,13 @@ The API wrapper raises domain-specific exceptions
 
 ### Entity map
 
-All entities are children of a single HA device per sensor. Device info
-populated from the API response (`description`, `model`,
-`firmwareVersion`, MAC as identifier).
+All entities are children of a single HA device per sensor. The
+device-registry keys (identifier = the canonical uppercase MAC;
+connection = its `format_mac` lowercase form) derive from the config
+entry — never from the cloud-echoed `uuid` — so a cloud-side casing
+change can't mint a duplicate device (same rationale as entity
+unique_ids, v0.7.1). Display fields (`description`, `model`,
+`firmwareVersion`) populate from the API response.
 
 #### Sensor entities
 

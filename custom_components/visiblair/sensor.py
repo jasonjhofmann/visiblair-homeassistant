@@ -277,27 +277,34 @@ class VisiblAirSensor(CoordinatorEntity[VisiblAirCoordinator], SensorEntity):
         self._attr_unique_id = (
             f"{DOMAIN}_{coordinator.canonical_uuid}_{description.key}"
         )
-        self._attr_device_info = device_info_for(coordinator.data)
+        self._attr_device_info = device_info_for(coordinator)
 
     @property
     def native_value(self) -> Any:
         return self.entity_description.value_fn(self.coordinator.data)
 
 
-def device_info_for(data: VisiblAirSensorData) -> DeviceInfo:
+def device_info_for(coordinator: VisiblAirCoordinator) -> DeviceInfo:
     """Shared DeviceInfo factory — imported by binary_sensor.py too.
 
     The MAC is the sensor's UUID; ``format_mac`` canonicalises to HA's
     standard lowercase colon-separated form so DHCP/Zeroconf discovery
     from other integrations can match this device.
+
+    The registry-keying fields (``identifiers``/``connections``) derive
+    from the entry's canonical (uppercase) MAC, NOT the cloud-echoed
+    ``coordinator.data.uuid`` — identical bytes today, but immune to a
+    cloud-side casing change minting a duplicate device and orphaning
+    the registered one. Display fields still come from the live reading.
     """
+    data = coordinator.data
     return DeviceInfo(
-        identifiers={(DOMAIN, data.uuid)},
-        name=data.description or f"VisiblAir {data.uuid}",
+        identifiers={(DOMAIN, coordinator.canonical_uuid)},
+        name=data.description or f"VisiblAir {coordinator.canonical_uuid}",
         manufacturer=MANUFACTURER,
         model=f"Model {data.model}" if data.model else None,
         sw_version=data.firmware_version or None,
-        connections={(CONNECTION_NETWORK_MAC, format_mac(data.uuid))},
+        connections={(CONNECTION_NETWORK_MAC, format_mac(coordinator.canonical_uuid))},
     )
 
 
