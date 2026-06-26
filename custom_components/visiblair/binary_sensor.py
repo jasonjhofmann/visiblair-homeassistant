@@ -156,15 +156,24 @@ class VisiblAirBinarySensor(
 
     @property
     def available(self) -> bool:
-        """Unavailable when the flag is unreported in the latest payload.
+        """Unavailable when the reading is stale or the flag is unreported.
 
-        Deliberate choice of *unavailable* over *unknown* (returning
-        None from is_on): the flag's backing data feed — the
-        ``lastSampleDataRedis`` blob — is absent, which matches HA's
-        unavailable semantic; unknown is for values not *yet* known.
+        Two distinct reasons to go unavailable, both deliberately
+        *unavailable* rather than *unknown* (HA semantics: unknown = not
+        yet known, unavailable = the backing feed can't currently provide
+        the value):
+
+        * **Stale** — after a device powers off the cloud keeps serving
+          the last cached sample, so every power/health flag is frozen.
+          Gating on ``data_is_fresh`` stops a parked-and-off device from
+          reporting e.g. *Charging* indefinitely.
+        * **Unreported** — the flag's backing ``lastSampleDataRedis``
+          blob is absent; reporting ``off`` would mask a real fault as
+          "no fault".
         """
         return (
             super().available
+            and self.coordinator.data_is_fresh
             and self.entity_description.value_fn(self.coordinator.data) is not None
         )
 
