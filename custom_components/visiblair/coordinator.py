@@ -9,6 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .api import (
     VisiblAirAPI,
@@ -16,7 +17,7 @@ from .api import (
     VisiblAirError,
     VisiblAirSensorData,
 )
-from .const import CONF_UUID, DEFAULT_SCAN_INTERVAL, DOMAIN
+from .const import CONF_UUID, DEFAULT_SCAN_INTERVAL, DOMAIN, STALE_AFTER
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,6 +57,26 @@ class VisiblAirCoordinator(DataUpdateCoordinator[VisiblAirSensorData]):
         # canonicalised value; the data key covers the (theoretical)
         # unique_id-less entry for type narrowing.
         self.canonical_uuid: str = entry.unique_id or entry.data[CONF_UUID]
+
+    @property
+    def data_is_fresh(self) -> bool:
+        """Whether the latest reading is recent enough to trust.
+
+        After a sensor powers off the cloud keeps returning the last
+        cached sample on every poll — the fetch succeeds and
+        ``last_update_success`` stays ``True`` while
+        ``lastSampleTimeStampRedis`` is frozen — so success alone can't
+        distinguish a live device from a dead one. Measurement entities
+        gate their availability on this so a stale reading goes
+        ``unavailable`` instead of masquerading as current. The
+        last-sample-timestamp diagnostic deliberately ignores this gate
+        so the user can still see *how* stale the data is.
+
+        Read only by entities, which exist only after the first
+        successful refresh has populated ``self.data`` — so, as
+        elsewhere in this integration, the reading is taken as present.
+        """
+        return dt_util.utcnow() - self.data.last_sample_at < STALE_AFTER
 
     @property
     def _auth_failure_store(self) -> dict[str, int]:

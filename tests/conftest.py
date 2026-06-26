@@ -22,6 +22,13 @@ FIXTURES = Path(__file__).parent / "fixtures"
 TEST_VIEW_TOKEN = "test-view-token-abcdef"
 TEST_UUID = "AA:BB:CC:DD:EE:FF"
 
+# The captured fixture's ``lastSampleTimeStampRedis`` is 2026-05-26T20:50:29Z.
+# Freezing the suite clock to just after the moment the fixture was sampled
+# keeps that reading "fresh" so the freshness gate added in 0.7.2 doesn't mark
+# every fixture-built entity unavailable. Staleness tests advance the clock
+# past STALE_AFTER explicitly via the same ``freezer``.
+FIXTURE_SAMPLE_TIME = "2026-05-26T20:50:30+00:00"
+
 
 def uid(key: str) -> str:
     """The unique_id the integration builds for an entity key."""
@@ -59,6 +66,19 @@ def sensor_response_dict(sensor_response_raw: str) -> dict[str, Any]:
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
     """Make HA load the integration from ``custom_components/`` in every test."""
+
+
+@pytest.fixture(autouse=True)
+def freeze_to_fixture_time(freezer: Any) -> None:
+    """Pin the suite clock to just after the fixture's sample time.
+
+    The freshness gate (0.7.2) compares ``dt_util.utcnow()`` against the
+    reading's ``last_sample_at``. The captured fixture's timestamp is
+    fixed in the past, so without a frozen clock every fixture-built
+    entity would read as stale. Pinning ``now`` to one second after the
+    sample keeps the fixture fresh; staleness tests ``tick`` forward.
+    """
+    freezer.move_to(FIXTURE_SAMPLE_TIME)
 
 
 @pytest.fixture

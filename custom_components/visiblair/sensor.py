@@ -65,6 +65,13 @@ class VisiblAirSensorEntityDescription(SensorEntityDescription):
     """
 
     value_fn: Callable[[VisiblAirSensorData], Any]
+    # When True the entity stays available even if the reading is stale.
+    # Reserved for static identity/metadata (firmware, last-calibration
+    # time) and the last-sample timestamp itself — the timestamp is
+    # precisely how the user sees staleness, so gating it on freshness
+    # would hide the one value that explains why the rest went away. Live
+    # measurements leave this False and go unavailable once stale.
+    freshness_exempt: bool = False
 
 
 # Particulate-matter device-class mapping.
@@ -226,6 +233,8 @@ SENSOR_DESCRIPTIONS: tuple[VisiblAirSensorEntityDescription, ...] = (
         key="firmware_version",
         translation_key="firmware_version",
         entity_category=EntityCategory.DIAGNOSTIC,
+        # Static identity — meaningful regardless of reading freshness.
+        freshness_exempt=True,
         value_fn=lambda d: d.firmware_version or None,
     ),
     VisiblAirSensorEntityDescription(
@@ -233,6 +242,10 @@ SENSOR_DESCRIPTIONS: tuple[VisiblAirSensorEntityDescription, ...] = (
         translation_key="last_sample",
         device_class=SensorDeviceClass.TIMESTAMP,
         entity_category=EntityCategory.DIAGNOSTIC,
+        # The staleness indicator itself — must stay visible while the
+        # live measurements go unavailable, so the user can see when the
+        # device last reported (e.g. "2 hours ago" for a parked car).
+        freshness_exempt=True,
         value_fn=lambda d: d.last_sample_at,
     ),
     VisiblAirSensorEntityDescription(
@@ -240,6 +253,8 @@ SENSOR_DESCRIPTIONS: tuple[VisiblAirSensorEntityDescription, ...] = (
         translation_key="last_calibration",
         device_class=SensorDeviceClass.TIMESTAMP,
         entity_category=EntityCategory.DIAGNOSTIC,
+        # Calibration history — static metadata, not a live reading.
+        freshness_exempt=True,
         value_fn=lambda d: d.last_calibration_at,
     ),
 )
@@ -278,6 +293,21 @@ class VisiblAirSensor(CoordinatorEntity[VisiblAirCoordinator], SensorEntity):
             f"{DOMAIN}_{coordinator.canonical_uuid}_{description.key}"
         )
         self._attr_device_info = device_info_for(coordinator)
+
+    @property
+    def available(self) -> bool:
+        """Unavailable when the latest reading is stale.
+
+        The VisiblAir cloud keeps serving the last cached sample after a
+        device powers off, so a successful poll no longer proves the
+        value is current — live measurements go unavailable once the
+        sample ages past ``STALE_AFTER``. Static-metadata entities
+        (``freshness_exempt``) ignore the gate; see the description
+        field's docstring.
+        """
+        if self.entity_description.freshness_exempt:
+            return super().available
+        return super().available and self.coordinator.data_is_fresh
 
     @property
     def native_value(self) -> Any:
