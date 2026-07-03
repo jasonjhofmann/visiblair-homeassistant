@@ -358,10 +358,19 @@ case a future revision ever attaches the raw response):
 - **Offline** (response 5xx, connection error, or empty status line):
   raise `UpdateFailed`. Entities go unavailable. Coordinator keeps
   trying on cadence.
-- **Stale** (`lastSampleTimeStampRedis` more than 15 min in the past):
-  log a warning at INFO. Do not mark entities unavailable — a real
-  sensor offline scenario, where the cloud has no new data to report,
-  should still surface the last known value.
+- **Stale** (`lastSampleTimeStampRedis` more than `STALE_AFTER` = 15 min
+  in the past): the fetch still *succeeds* — after a sensor powers off the
+  cloud keeps serving the last cached reading on every poll, so
+  `last_update_success` stays `True` while the timestamp is frozen. Live
+  measurement entities gate availability on `coordinator.data_is_fresh`
+  and go **unavailable** once the reading ages out, so a powered-off
+  device (e.g. the in-car sensor when the car is off) stops masquerading
+  as live and downstream consumers stop trusting a frozen value. The
+  last-sample-timestamp diagnostic and other static metadata
+  (`freshness_exempt`) deliberately stay available, so the user can still
+  see *when* the device last reported. *(Earlier releases logged the
+  staleness but kept the frozen value visible — that left consumers
+  unable to tell a live reading from a dead one; corrected in 0.8.0.)*
 
 ## Out of scope (v0.1+)
 

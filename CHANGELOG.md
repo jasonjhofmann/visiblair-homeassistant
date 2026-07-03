@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.8.0 — 2026-06-26
+
+Contains an **entity behavior change** (stale readings now go
+unavailable) — hence the minor bump.
+
+- **⚠️ BEHAVIOR CHANGE — stale readings go unavailable.** When a sensor
+  powers off, the VisiblAir cloud keeps serving the *last cached reading*
+  on every poll: the fetch succeeds (`last_update_success` stays `True`)
+  but `lastSampleTimeStampRedis` stops advancing. Previously every entity
+  stayed **available** with the frozen value, so downstream consumers
+  (graphs, automations) assumed the last reading was current — e.g. the
+  in-car sensor reporting a fixed CO₂ and "Charging" for hours after the
+  car was switched off. Now live measurement entities (CO₂, temperature,
+  humidity, VOC, pressure, all PM sizes, battery %/voltage, and the
+  power/health binary sensors) go **unavailable** once the latest sample
+  is older than `STALE_AFTER` (15 min — generous over the 60 s cadence so
+  a couple of missed samples or minor device-clock skew don't flap them).
+  The **last-sample timestamp** diagnostic plus the firmware-version and
+  last-calibration sensors are `freshness_exempt` and stay visible, so
+  you can still see *when* the device last reported. Automations that read
+  these entities may need a `not from/to: unavailable` guard.
+
 ## 0.7.1 — 2026-06-10
 
 - **Fixed (robustness):** device-registry identifiers/connections now
