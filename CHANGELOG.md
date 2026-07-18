@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.0 — 2026-06-26
+## 0.8.0 — 2026-07-14
 
 Contains an **entity behavior change** (stale readings now go
 unavailable) — hence the minor bump.
