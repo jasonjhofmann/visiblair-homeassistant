@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- **Now in the HACS default repository.** README and `info.md` install
+  instructions no longer tell users to add a custom repository; added a
+  My Home Assistant "open in HACS" button and switched the badge to
+  HACS Default.
+
 ## 0.8.0 — 2026-07-14
 
 Contains an **entity behavior change** (stale readings now go

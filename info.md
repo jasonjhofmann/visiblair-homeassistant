@@ -6,6 +6,10 @@ pressure, full-spectrum particulate matter (PM 0.1–10 µm), battery state and
 sensor health into Home Assistant for any VisiblAir sensor you have a
 "Public view" share link for.
 
+Available in the **HACS default repository** — search HACS for
+"VisiblAir", download, restart Home Assistant, then add it via
+**Settings → Devices & Services → Add Integration → VisiblAir**.
+
 ## What it does
 
 - One Home Assistant device per sensor, configured by pasting its (MAC,

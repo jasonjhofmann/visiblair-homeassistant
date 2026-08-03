@@ -1,7 +1,7 @@
 # VisiblAir for Home Assistant
 
 [![release](https://img.shields.io/github/v/release/jasonjhofmann/visiblair-homeassistant?label=release&color=blue)](https://github.com/jasonjhofmann/visiblair-homeassistant/releases)
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://hacs.xyz/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![CI](https://github.com/jasonjhofmann/visiblair-homeassistant/actions/workflows/ci.yml/badge.svg)](https://github.com/jasonjhofmann/visiblair-homeassistant/actions/workflows/ci.yml)
 
@@ -18,12 +18,14 @@ and a hardware-health flag per PM-subsystem fault VisiblAir reports.
 
 ### Via HACS (recommended)
 
-1. In HACS → ⋮ → **Custom repositories**, add
-   `https://github.com/jasonjhofmann/visiblair-homeassistant` as type
-   **Integration**.
-2. Search HACS for **VisiblAir** and download it.
-3. Restart Home Assistant.
-4. **Settings → Devices & Services → Add Integration → VisiblAir**.
+VisiblAir is in the **HACS default repository** — no custom repository
+needed.
+
+1. In HACS, search for **VisiblAir** and download it.
+2. Restart Home Assistant.
+3. **Settings → Devices & Services → Add Integration → VisiblAir**.
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jasonjhofmann&repository=visiblair-homeassistant&category=integration)
 
 ### Manual
 
