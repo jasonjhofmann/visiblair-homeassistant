@@ -124,7 +124,7 @@ class VisiblAirCoordinator(DataUpdateCoordinator[VisiblAirSensorData]):
         self._auth_failure_store.pop(entry_id, None)
 
         _LOGGER.debug(
-            "Polled %s: CO2=%s ppm, PM2.5=%s µg/m³, battery=%s%%",
+            "Polled %s: CO2=%s ppm, PM2.5=%s μg/m³, battery=%s%%",
             self._api.uuid,
             data.co2_ppm,
             data.pm_2_5_um,
