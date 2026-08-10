@@ -272,14 +272,14 @@ in `unique_id`, and the entity-ID slug component (e.g.
 | `humidity` | `lastSampleHumidity` | `%` | `humidity` |
 | `voc_index` | `lastSampleVocIndex.Int64` | (none) | `aqi` (closest match) |
 | `pressure` | `lastSamplePressure.Float64` | `hPa` | `atmospheric_pressure` |
-| `pm_0_1` | `lastSamplePm01.Float64` | `µg/m³` | (no HA class) |
-| `pm_0_3` | `lastSamplePm03.Float64` | `µg/m³` | (no HA class) |
-| `pm_0_5` | `lastSamplePm05.Float64` | `µg/m³` | (no HA class) |
-| `pm_1_0` | `lastSamplePm10.Float64` | `µg/m³` | `pm1` |
-| `pm_2_5` | `lastSamplePm25.Float64` | `µg/m³` | `pm25` |
-| `pm_4_0` | nested `lastSampleDataRedis.pm40` | `µg/m³` | (no HA class) |
-| `pm_5_0` | `lastSamplePm50.Float64` | `µg/m³` | (no HA class) |
-| `pm_10_0` | `lastSamplePm100.Float64` | `µg/m³` | `pm10` |
+| `pm_0_1` | `lastSamplePm01.Float64` | `μg/m³` | (no HA class) |
+| `pm_0_3` | `lastSamplePm03.Float64` | `μg/m³` | (no HA class) |
+| `pm_0_5` | `lastSamplePm05.Float64` | `μg/m³` | (no HA class) |
+| `pm_1_0` | `lastSamplePm10.Float64` | `μg/m³` | `pm1` |
+| `pm_2_5` | `lastSamplePm25.Float64` | `μg/m³` | `pm25` |
+| `pm_4_0` | nested `lastSampleDataRedis.pm40` | `μg/m³` | (no HA class) |
+| `pm_5_0` | `lastSamplePm50.Float64` | `μg/m³` | (no HA class) |
+| `pm_10_0` | `lastSamplePm100.Float64` | `μg/m³` | `pm10` |
 | `battery` | `lastSampleBattPct.Float64` | `%` | `battery` |
 | `battery_voltage` | `lastSampleBattVoltage.Float64` | `V` | `voltage` (diagnostic) |
 
@@ -292,7 +292,7 @@ device-class names that have different physical meanings.
 **Display-name note (v0.4.0):** entity *display names* are bare numerics
 (`PM 1.0`, `PM 10.0`) with no `µm` suffix. The Unicode `µ` was
 slugifying to `m`, producing ugly entity-ID slugs like `pm_1_mm`. The
-unit context is conveyed by the `µg/m³` unit and the PM-spectrum
+unit context is conveyed by the `μg/m³` unit and the PM-spectrum
 grouping in the dashboard; the size is self-evident.
 
 #### Binary sensor entities

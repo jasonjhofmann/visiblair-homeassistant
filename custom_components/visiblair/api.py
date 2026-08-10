@@ -99,7 +99,7 @@ class VisiblAirSensorData:
     voc_index: int | None
     pressure_hpa: float | None
 
-    # Particulate matter (µg/m³)
+    # Particulate matter (μg/m³)
     pm_0_1_um: float | None
     pm_0_3_um: float | None
     pm_0_5_um: float | None
