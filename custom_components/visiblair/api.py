@@ -373,7 +373,7 @@ def _as_int(value: Any) -> int | None:
         return None
     try:
         return int(float(value))
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
 
 
@@ -382,7 +382,7 @@ def _as_float(value: Any) -> float | None:
         return None
     try:
         return float(value)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
 
 
@@ -434,7 +434,7 @@ def _parse_naive_local(value: Any, tz_name: Any = None) -> datetime | None:
     if isinstance(tz_name, str) and tz_name:
         try:
             zone = ZoneInfo(tz_name)
-        except (ZoneInfoNotFoundError, ValueError):
+        except ZoneInfoNotFoundError, ValueError:
             _LOGGER.debug(
                 "Device tz %r is not a valid IANA zone; assuming UTC", tz_name
             )

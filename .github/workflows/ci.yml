@@ -33,10 +33,12 @@ jobs:
             --with voluptuous \
             mypy custom_components/visiblair/
 
-  # The declared support floor (hacs.json: HA 2025.1.0) ran on Python 3.12,
-  # where the modern HA test harness no longer installs. This leg can't run
-  # the suite, but it definitively rejects syntax newer than the floor
-  # (e.g. the unparenthesized except clause that shipped in 0.6.2).
+  # Compiles every module on the exact interpreter implied by the declared
+  # support floor (hacs.json: HA 2026.7.0 -> requires-python >=3.14.2), so
+  # syntax newer than the floor can never ship silently. Floor and current
+  # interpreter coincide today, which makes this leg a weak guard for now;
+  # it regains its teeth the moment HA's Python floor moves past 3.14 and
+  # this pin stays behind. Keep this pinned to the FLOOR, never "latest".
   syntax-floor:
     runs-on: ubuntu-latest
     steps:
@@ -45,19 +47,22 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 
-      - name: Compile all modules on Python 3.12
+      - name: Compile all modules on Python 3.14
         run: |
-          uv run --python 3.12 --no-project \
+          uv run --python 3.14 --no-project \
             python -m compileall -q custom_components/
 
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # 3.14 resolves the current HA test harness; 3.13 resolves the
-        # newest harness that still supports it, so the same suite also
-        # runs against an older Home Assistant.
-        python-version: ["3.13", "3.14"]
+        # Single entry by necessity, not by preference. The HA 2026.7.0
+        # floor is the first release carrying UnitOfDensity/UnitOfRatio,
+        # and it requires Python >=3.14.2. A 3.13 leg would resolve a
+        # pre-2026.7 harness that lacks those enums and fail on import,
+        # so it tests nothing we support. Add an entry back only when a
+        # newer Python can still resolve a >=2026.7 harness.
+        python-version: ["3.14"]
     steps:
       - uses: actions/checkout@v7
 

@@ -7,8 +7,9 @@ import dataclasses
 import pytest
 from homeassistant.const import (
     ATTR_UNIT_OF_MEASUREMENT,
-    CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     EntityCategory,
+    UnitOfDensity,
+    UnitOfRatio,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
@@ -43,10 +44,10 @@ async def test_sensor_values_and_units(
 ) -> None:
     """Core gauges surface with the expected value and unit."""
     cases = [
-        ("co2", 523, "ppm"),
+        ("co2", 523, UnitOfRatio.PARTS_PER_MILLION),
         ("temperature", 22.7, "°C"),
         ("humidity", 32.0, "%"),
-        ("pm_2_5", 0.563, CONCENTRATION_MICROGRAMS_PER_CUBIC_METER),
+        ("pm_2_5", 0.563, UnitOfDensity.MICROGRAMS_PER_CUBIC_METER),
     ]
     for key, value, unit in cases:
         state = state_for(hass, "sensor", key)

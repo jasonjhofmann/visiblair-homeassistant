@@ -186,7 +186,9 @@ potentially-sensitive fields are auto-redacted; safe to share publicly.
 
 ## Compatibility
 
-- **Home Assistant 2025.1.0+** (declared in `hacs.json`)
+- **Home Assistant 2026.7.0+** (declared in `hacs.json`) — 2026.7.0 is the
+  first release providing the `UnitOfDensity` / `UnitOfRatio` unit enums
+  this integration uses; it also implies Python 3.14
 - **VisiblAir Model E** firmware 1.7.2 confirmed in production
 - **VisiblAir Model E-Lite** should work — open an issue if it doesn't
 

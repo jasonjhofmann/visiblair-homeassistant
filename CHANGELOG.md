@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+## 0.9.0 — 2026-08-09
+
+- **⚠️ BREAKING — minimum Home Assistant is now 2026.7.0 (was 2025.1.0).**
+  Home Assistant deprecated the `CONCENTRATION_*` unit constants in core
+  PR #175189 (merged 2026-06-30), with removal scheduled for **HA Core
+  2027.8**. This release migrates ahead of that removal:
+  `CONCENTRATION_PARTS_PER_MILLION` → `UnitOfRatio.PARTS_PER_MILLION` and
+  `CONCENTRATION_MICROGRAMS_PER_CUBIC_METER` →
+  `UnitOfDensity.MICROGRAMS_PER_CUBIC_METER`. Those enums first ship in
+  **2026.7.0** and are absent in 2026.6.0, so 2026.7.0 is the exact
+  floor — on anything older the integration now fails to import. Because
+  HA 2026.7.0 declares `requires-python = ">=3.14.2"`, the effective
+  Python floor becomes **3.14**; `ruff` `target-version` moved to `py314`
+  (it must track the OLDEST supported interpreter), CI's syntax-floor
+  compileall leg moved 3.12 → 3.14, and the pytest matrix dropped its
+  3.13 entry, which could only ever have resolved a pre-2026.7 Home
+  Assistant lacking these enums. **No unit string, entity, or runtime
+  behaviour changes** — the deprecated constants and the new enum members
+  carry byte-identical values, so states, unit-of-measurement attributes,
+  statistics, and history are untouched; this removes a startup
+  deprecation warning and future-proofs against the 2027.8 removal.
+  Users on Home Assistant older than 2026.7.0 should stay on 0.8.1 until
+  they upgrade. `PERCENTAGE` was *not* deprecated upstream and is
+  unchanged here.
+
 ## 0.8.1 — 2026-08-09
 
 - **Docs and log text use HA's canonical micro sign (U+03BC).**
