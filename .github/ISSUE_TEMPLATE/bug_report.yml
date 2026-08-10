@@ -23,7 +23,7 @@ body:
     attributes:
       label: Home Assistant Core version
       description: Settings → About
-      placeholder: e.g. 2026.5.1
+      placeholder: e.g. 2026.8.1
     validations:
       required: true
 

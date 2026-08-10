@@ -2,21 +2,8 @@
 
 ## Unreleased
 
-## 0.8.1 — 2026-08-09
+## 0.9.0 — 2026-08-09
 
-- **Docs and log text use HA's canonical micro sign (U+03BC).**
-  `docs/architecture.md`, the particulate section comment in `api.py` and the
-  coordinator's poll log spelled `µg/m³` with U+00B5 MICRO SIGN, while Home
-  Assistant's own constant is U+03BC GREEK SMALL LETTER MU. Text only — the
-  sensors themselves were always correct, since they take the unit from
-  `CONCENTRATION_MICROGRAMS_PER_CUBIC_METER` rather than a literal. The `µm`
-  references (PM sizes) are deliberately left on U+00B5, which is the correct
-  character for micrometres and has no HA constant to match.
-
-- **Now in the HACS default repository.** README and `info.md` install
-  instructions no longer tell users to add a custom repository; added a
-  My Home Assistant "open in HACS" button and switched the badge to
-  HACS Default.
 - **⚠️ BREAKING — minimum Home Assistant is now 2026.7.0 (was 2025.1.0).**
   Home Assistant deprecated the `CONCENTRATION_*` unit constants in core
   PR #175189 (merged 2026-06-30), with removal scheduled for **HA Core
@@ -36,9 +23,25 @@
   carry byte-identical values, so states, unit-of-measurement attributes,
   statistics, and history are untouched; this removes a startup
   deprecation warning and future-proofs against the 2027.8 removal.
-  Users on Home Assistant older than 2026.7.0 should stay on 0.8.0 until
+  Users on Home Assistant older than 2026.7.0 should stay on 0.8.1 until
   they upgrade. `PERCENTAGE` was *not* deprecated upstream and is
   unchanged here.
+
+## 0.8.1 — 2026-08-09
+
+- **Docs and log text use HA's canonical micro sign (U+03BC).**
+  `docs/architecture.md`, the particulate section comment in `api.py` and the
+  coordinator's poll log spelled `µg/m³` with U+00B5 MICRO SIGN, while Home
+  Assistant's own constant is U+03BC GREEK SMALL LETTER MU. Text only — the
+  sensors themselves were always correct, since they take the unit from
+  `CONCENTRATION_MICROGRAMS_PER_CUBIC_METER` rather than a literal. The `µm`
+  references (PM sizes) are deliberately left on U+00B5, which is the correct
+  character for micrometres and has no HA constant to match.
+
+- **Now in the HACS default repository.** README and `info.md` install
+  instructions no longer tell users to add a custom repository; added a
+  My Home Assistant "open in HACS" button and switched the badge to
+  HACS Default.
 
 ## 0.8.0 — 2026-07-14
 
