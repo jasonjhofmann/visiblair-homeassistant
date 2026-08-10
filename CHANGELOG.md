@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.8.1 — 2026-08-09
+
 - **Docs and log text use HA's canonical micro sign (U+03BC).**
   `docs/architecture.md`, the particulate section comment in `api.py` and the
   coordinator's poll log spelled `µg/m³` with U+00B5 MICRO SIGN, while Home
