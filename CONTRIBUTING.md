@@ -44,15 +44,15 @@ cd visiblair-homeassistant
 # Run the test suite (uv handles the Python + dependency install).
 # The tests use pytest-homeassistant-custom-component, which pulls in a
 # pinned Home Assistant; CI gates coverage at >=95%.
-uv run --python 3.13 --with pytest-homeassistant-custom-component --with pytest-cov \
+uv run --python 3.14 --with pytest-homeassistant-custom-component --with pytest-cov \
   python -m pytest tests/ --cov=custom_components.visiblair --cov-report=term-missing
 
 # Lint
-uv run --python 3.13 --with ruff ruff check custom_components/ tests/
-uv run --python 3.13 --with ruff ruff format --check custom_components/ tests/
+uv run --python 3.14 --with ruff ruff check custom_components/ tests/
+uv run --python 3.14 --with ruff ruff format --check custom_components/ tests/
 
 # Type-check
-uv run --python 3.13 --with mypy --with homeassistant --with aiohttp --with voluptuous \
+uv run --python 3.14 --with mypy --with homeassistant --with aiohttp --with voluptuous \
   mypy custom_components/visiblair/
 ```
 
@@ -62,8 +62,9 @@ to pass cleanly.
 ## Code style
 
 - Modern HA patterns: `entry.runtime_data` (not `hass.data[DOMAIN][…]`),
-  PEP 695 `type` statements (the project targets Python 3.13 to match
-  HA Core), description-driven entity tables.
+  PEP 695 `type` statements (the project targets Python 3.14 to match
+  HA Core — the HA 2026.7.0 floor requires >=3.14.2), description-driven
+  entity tables.
 - Ruff and mypy strict are the gate. The pyproject.toml at the repo root
   has the exact configuration.
 - Comments: only when WHY is non-obvious. Don't restate what the code does.

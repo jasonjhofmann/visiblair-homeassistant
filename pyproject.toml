@@ -4,11 +4,14 @@
 
 [tool.ruff]
 line-length = 88
-# Must match the OLDEST supported interpreter (hacs.json floor HA 2025.1.0
-# ran Python 3.12), NOT the newest: with py314 here, ruff format actively
-# rewrites `except (A, B):` to 3.14-only unparenthesized PEP 758 syntax —
-# the exact regression that shipped in 0.6.2.
-target-version = "py312"
+# Must match the OLDEST supported interpreter, NOT the newest — the rule
+# that 0.6.2 broke. The hacs.json floor is now HA 2026.7.0, whose
+# pyproject declares requires-python = ">=3.14.2", so the oldest
+# supported interpreter IS 3.14. Consequence: ruff format's rewrite of
+# `except (A, B):` into unparenthesized PEP 758 syntax is now correct
+# output rather than the 0.6.2 regression — that syntax no longer
+# outruns any interpreter we support.
+target-version = "py314"
 extend-exclude = ["tests/fixtures"]
 
 [tool.ruff.lint]
@@ -35,9 +38,11 @@ ignore = [
 "tests/*" = ["B011"]  # pytest uses assert intentionally
 
 [tool.mypy]
-# 3.14, NOT the 3.12 floor: mypy parses the installed (current) Home
-# Assistant source, which itself uses 3.14-only syntax. The 3.12 floor for
-# OUR code is enforced by ruff target-version and CI's compileall job.
+# Matches the installed (current) Home Assistant source, which itself
+# uses 3.14-only syntax. Since the HA 2026.7.0 floor requires Python
+# >=3.14.2, this now coincides with the support floor rather than
+# running ahead of it. OUR code's floor stays independently enforced by
+# ruff target-version and CI's compileall job.
 python_version = "3.14"
 strict = true
 warn_unreachable = true
