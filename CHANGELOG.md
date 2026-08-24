@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.1 — 2026-08-24
 
 - **README rewrite.** Added the VisiblAir logo, restructured the page around
   tasks (Before you begin / Install / Add a sensor / Troubleshoot) following
