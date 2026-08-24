@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **README rewrite.** Added the VisiblAir logo, restructured the page around
+  tasks (Before you begin / Install / Add a sensor / Troubleshoot) following
+  Google's developer documentation style guide, and documented two behaviors
+  that were only in the code: the 15-minute staleness gate that takes
+  measurement and health entities `unavailable` after a sensor powers off
+  (shipped in 0.8.0), and the absence of any list endpoint on the cloud API,
+  which is why sensors can't be discovered automatically.
+
 ## 0.9.0 — 2026-08-09
 
 - **⚠️ BREAKING — minimum Home Assistant is now 2026.7.0 (was 2025.1.0).**

@@ -1,100 +1,118 @@
 # VisiblAir for Home Assistant
 
+<img src="https://raw.githubusercontent.com/jasonjhofmann/visiblair-homeassistant/main/custom_components/visiblair/brand/logo@2x.png" alt="VisiblAir" width="300">
+
 [![release](https://img.shields.io/github/v/release/jasonjhofmann/visiblair-homeassistant?label=release&color=blue)](https://github.com/jasonjhofmann/visiblair-homeassistant/releases)
 [![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://hacs.xyz/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![CI](https://github.com/jasonjhofmann/visiblair-homeassistant/actions/workflows/ci.yml/badge.svg)](https://github.com/jasonjhofmann/visiblair-homeassistant/actions/workflows/ci.yml)
 
-Async, read-only Home Assistant integration for the
-[VisiblAir](https://visiblair.com/) air-quality sensor cloud API.
+Read your [VisiblAir](https://visiblair.com/) air-quality sensors into Home
+Assistant through the VisiblAir cloud API.
 
-Each VisiblAir sensor becomes one HA device with **26 entities**:
-CO₂, temperature, humidity, VOC index, atmospheric pressure, the full
-PM 0.1 – 10 µm spectrum (8 sizes), battery state and charge status,
-plus diagnostic readouts for firmware, last sample, last calibration,
-and a hardware-health flag per PM-subsystem fault VisiblAir reports.
+Each sensor becomes one Home Assistant device with 26 entities: carbon dioxide
+(CO₂), temperature, humidity, volatile organic compound (VOC) index,
+atmospheric pressure, the full particulate matter (PM) spectrum from 0.1 to
+10 µm, battery and charge state, and diagnostics for firmware, sample times,
+and the hardware fault flags the sensor reports about itself.
+
+The integration is read-only. It calls the public viewer endpoint and writes
+nothing to your VisiblAir account.
+
+> Unofficial. Not affiliated with or endorsed by VisiblAir.
+
+## Before you begin
+
+You need the following:
+
+- Home Assistant 2026.7.0 or later. That release introduced the
+  `UnitOfDensity` and `UnitOfRatio` enums this integration uses, and it
+  requires Python 3.14.
+- A VisiblAir sensor that's powered on and syncing to the VisiblAir cloud.
+- The sensor's MAC address and viewToken, which both appear in the sensor's
+  Public view link.
+
+Firmware 1.7.2 on the VisiblAir Model E is confirmed in production. The Model
+E-Lite should work as well. If it doesn't,
+[open an issue](https://github.com/jasonjhofmann/visiblair-homeassistant/issues).
 
 ## Install
 
-### Via HACS (recommended)
+### Install with HACS
 
-VisiblAir is in the **HACS default repository** — no custom repository
-needed.
+VisiblAir is in the HACS default repository, so you don't need to add a custom
+repository.
 
 1. In HACS, search for **VisiblAir** and download it.
 2. Restart Home Assistant.
-3. **Settings → Devices & Services → Add Integration → VisiblAir**.
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jasonjhofmann&repository=visiblair-homeassistant&category=integration)
 
-### Manual
+### Install manually
 
-1. Copy `custom_components/visiblair/` to `<config>/custom_components/`.
+1. Copy `custom_components/visiblair/` into your Home Assistant
+   `config/custom_components/` directory.
 2. Restart Home Assistant.
-3. **Settings → Devices & Services → Add Integration → VisiblAir**.
 
-## Setup
+## Add a sensor
 
-You add **one HA config entry per sensor**. For each one you need its
-**MAC address** and **viewToken** — both visible in the VisiblAir cloud
-portal's "Public view" share link for that sensor:
+Each sensor is its own config entry, so repeat these steps for every sensor you
+want in Home Assistant.
 
-```
-https://public.visiblair.com/index.html?id=<MAC>&viewToken=<TOKEN>
-                                          ^^^^^               ^^^^^
-```
+1. In the VisiblAir portal, open the **Public view** share link for the sensor.
+   The URL contains the two values you need:
 
-Paste those into the Add VisiblAir Sensor form. The integration
-validates them against the live API before saving. Repeat for each
-sensor.
+   ```text
+   https://public.visiblair.com/index.html?id=<MAC>&viewToken=<TOKEN>
+   ```
 
-To change a sensor's viewToken later (without removing it), use the
-entry's **⋮ → Reconfigure** action.
+2. In Home Assistant, go to **Settings > Devices & services > Add integration**
+   and select **VisiblAir**.
+3. Paste the `id=` value into **MAC address** and the `viewToken=` value into
+   **viewToken**.
+4. Click **Submit**.
 
-## Removing the integration
+Home Assistant validates both values against the live API before it saves the
+entry, so a typo fails immediately instead of producing a dead device.
 
-This integration follows standard Home Assistant removal — no extra steps.
+Treat the viewToken like a password. It grants read access to that sensor's
+data, and the integration never writes it to the log at any level.
 
-1. Go to **Settings → Devices & Services**.
-2. Click the **VisiblAir** entry for the sensor you want to remove.
-3. Use the **⋮** (three-dot) menu and choose **Delete**.
+### Replace a viewToken
 
-Deleting a config entry removes that sensor's device, all its entities, and
-its stored credentials. To remove the integration's code as well, delete it
-via **HACS → VisiblAir → ⋮ → Remove** (or delete
-`custom_components/visiblair/` for a manual install) and restart Home
-Assistant. Nothing is written to your VisiblAir account — the integration is
-read-only.
+VisiblAir rotates viewTokens. When the current token stops working, Home
+Assistant starts a reauthentication flow and prompts you for a new one.
 
-## What you get per sensor
+To replace a token before it fails, select **⋮ > Reconfigure** on the config
+entry and paste the new value. A config entry's MAC address is fixed, so use a
+new entry if you want to track a different sensor.
+
+## Entities
 
 | Category | Entities |
-|---|---|
+| --- | --- |
 | Environmental | CO₂, temperature, humidity, VOC index, atmospheric pressure |
-| Particulate matter | PM 0.1, 0.3, 0.5, 1, 2.5, 4, 5, 10 µm (8 entities; HA device classes on PM 1/2.5/10) |
-| Power | battery (%), AC connected, charging |
-| Diagnostic | firmware version, last sample, last calibration, battery voltage |
+| Particulate matter | PM 0.1, 0.3, 0.5, 1, 2.5, 4, 5, and 10 µm (8 entities) |
+| Power | Battery percentage, AC connected, charging |
+| Diagnostic | Firmware version, last sample, last calibration, battery voltage |
 | Hardware health | PM fan fail, laser fail, RHT error, gas-sensor error, fan-speed warning, fan cleaning |
 
-All entities have proper device classes, units, and state classes —
-HA's long-term statistics, energy/air-quality dashboards, and graph
-extrapolation all work out of the box.
+Every entity carries units, a state class, and a device class where Home
+Assistant has one, so long-term statistics and the air-quality dashboard cards
+work without extra configuration. Device classes exist for PM 1, PM 2.5, and
+PM 10; the other five PM sizes report in µg/m³ without one.
 
-## Use cases
+Six entities are disabled by default: PM 0.1, 0.3, 0.5, 4, and 5 µm, and the
+battery-voltage diagnostic. Enable any of them from the entity's settings if
+you want them.
 
-- **Air-quality dashboards & alerts** — CO₂, PM 2.5, VOC index, temperature
-  and humidity feed HA's air-quality cards and threshold automations.
-- **Ventilation control** — drive a fan or ERV from CO₂ / PM 2.5.
-- **Sensor-fleet health** — battery %, AC/charging state, and the PM
-  fan/laser/sensor fault flags let you alert before a sensor degrades.
-
-## Example automations
+## Automation examples
 
 Notify when CO₂ climbs above 1000 ppm:
 
 ```yaml
 automation:
-  - alias: "High CO₂ — Living Room"
+  - alias: "High CO2 in the living room"
     triggers:
       - trigger: numeric_state
         entity_id: sensor.living_room_co2
@@ -102,10 +120,10 @@ automation:
     actions:
       - action: notify.mobile_app_phone
         data:
-          message: "Living Room CO₂ is {{ states('sensor.living_room_co2') }} ppm."
+          message: "Living room CO2 is {{ states('sensor.living_room_co2') }} ppm."
 ```
 
-Alert on a PM-subsystem fault (a fan/laser problem flag turning on):
+Notify when the PM subsystem reports a fault:
 
 ```yaml
 automation:
@@ -120,91 +138,79 @@ automation:
           message: "A VisiblAir PM sensor reported a fault."
 ```
 
-## Polling
+## How data is updated
 
-Polled at a fixed **60-second cadence**, matching VisiblAir sensors'
-factory sample rate. Not user-configurable per HA Core conventions —
-the integration owns its cadence.
+The integration polls the cloud every 60 seconds, which matches the factory
+sample rate of a VisiblAir sensor. The cadence is fixed and isn't
+user-configurable, following Home Assistant Core convention.
 
-## Why cloud-only
+### Stale readings go unavailable
 
-VisiblAir sensors expose an optional **Local API** at
-`http://co2click-<MAC-suffix>.local:8080/state` that would be the
-obviously-better target for a LAN-resident HA install — same data,
-no cloud round-trip. **It is not viable on current firmware (1.7.2).**
-Enabling the Local API toggle in the sensor's configuration menu causes
-the sensor to disconnect from the VisiblAir cloud and loop endlessly
-trying to upload data, requiring a physical power cycle to recover.
+When a sensor powers off, the VisiblAir cloud keeps serving its last cached
+reading. The poll still succeeds, so a successful fetch on its own doesn't
+prove the value is current.
 
-This integration adds a local mode the moment VisiblAir fixes the
-firmware. Until then: cloud-only.
+To handle that, every measurement and health entity goes `unavailable` once the
+sample behind it is more than 15 minutes old. A powered-off sensor stops
+reporting a frozen value as if it were live, and anything downstream stops
+trusting it.
 
-## Known limitations
+The firmware version, last sample, and last calibration entities are exempt
+from the gate. They stay available so you can see how old the data is.
 
-- **Cloud-only.** Requires internet access and a cloud-synced sensor; the
-  on-device Local API isn't usable on current firmware (see above).
-- **Read-only.** Only the public viewer endpoint is used — you can't change
-  sensor settings from Home Assistant.
-- **Fixed 60 s cadence.** Sub-minute resolution isn't available (and the
-  sensor's own sample rate wouldn't supply it).
-- **Niche PM sizes disabled by default.** PM 0.1/0.3/0.5/4.0/5.0 µm and the
-  battery-voltage diagnostic are off by default — enable them per entity if
-  you want them. PM 1/2.5/10 µm are on.
-- **One config entry per sensor.** Each sensor is added individually with its
-  own MAC + viewToken.
+## Why there's no local mode
 
-## Quality bar
+VisiblAir sensors expose an optional local API at
+`http://co2click-<MAC-suffix>.local:8080/state`. For a LAN-resident Home
+Assistant install that's the better target: same data, no cloud round trip.
 
-This integration aims to be public-grade reference quality:
+It isn't usable on firmware 1.7.2. Turning on the Local API toggle in the
+sensor's configuration menu makes the sensor drop its cloud connection and loop
+forever trying to upload, and only a physical power cycle recovers it.
 
-- **Defensive parsing.** The cloud API returns `200 OK` with an empty
-  body for any URL that isn't an exact route match — a trap for
-  developers who think they've discovered an endpoint. We treat empty
-  body as failure regardless of HTTP status, parse JSON without
-  trusting the (mis-stated) `text/plain` Content-Type, and explicitly
-  handle the Go-style `{"Float64": x, "Valid": false}` nullable-numeric
-  wrappers so absent values become `None`, not zero.
-- **Description-driven entities.** All 26 entities are generated from
-  one table; adding a new field VisiblAir starts reporting is a
-  one-row change, kept honest by a wiring-map completeness test that
-  fails if you forget.
-- **Lint + type-check + test gates.** ruff (lint + format), mypy strict,
-  and pytest (with a ≥95% coverage gate) run on every push to main and
-  every PR via GitHub Actions. The suite covers the config / reauth /
-  reconfigure flows, entity states, the API HTTP layer + normaliser quirks,
-  and diagnostics redaction — at 100% line coverage.
-- **Frozen architecture record.** See [docs/architecture.md](docs/architecture.md)
-  for the API surface, the catch-all trap, the local-API firmware bug
-  details, the entity map, and every design decision.
+This integration will add a local mode once VisiblAir fixes the firmware. Until
+then it's cloud-only.
 
-## Diagnostics
+## Limitations
 
-The integration tile has a **Download diagnostics** action that produces
-a sanitised JSON snapshot you can paste into a bug report. The
-`viewToken`, the sensor's MAC address, and all other
-potentially-sensitive fields are auto-redacted; safe to share publicly.
+- **Cloud-only.** You need internet access and a cloud-synced sensor. The
+  on-device local API isn't usable on current firmware.
+- **Read-only.** The integration uses the public viewer endpoint, so you can't
+  change sensor settings from Home Assistant.
+- **Fixed 60-second cadence.** Sub-minute resolution isn't available, and the
+  sensor's own sample rate wouldn't supply it.
+- **No discovery.** The cloud API has no endpoint that lists the sensors on an
+  account, so each one has to be added by hand with its own MAC address and
+  viewToken. That's also why there's one config entry per sensor.
 
-## Compatibility
+## Troubleshoot
 
-- **Home Assistant 2026.7.0+** (declared in `hacs.json`) — 2026.7.0 is the
-  first release providing the `UnitOfDensity` / `UnitOfRatio` unit enums
-  this integration uses; it also implies Python 3.14
-- **VisiblAir Model E** firmware 1.7.2 confirmed in production
-- **VisiblAir Model E-Lite** should work — open an issue if it doesn't
+### The MAC address or viewToken was rejected
 
-## Troubleshooting
+Copy both values again from a fresh Public view link in the VisiblAir portal.
+The viewToken rotates. If it has changed, Home Assistant shows a
+reauthentication prompt, or you can use **⋮ > Reconfigure**.
 
-**"MAC + viewToken was rejected"** — re-copy both values from a fresh
-Public-view link in the VisiblAir portal; the viewToken rotates. If it
-changed, the integration shows a reauthentication prompt (or use **⋮ →
-Reconfigure**).
+### Entities show `unavailable`
 
-**Entities show `unavailable`** — open **Download diagnostics** and check
-`coordinator.last_update_success`. A sensor that's offline or out of cloud
-sync stops returning data; the credentials are auto-redacted in the dump.
+Two things cause this, and the diagnostics download tells you which:
 
-**Enabling debug logs** — add this to `configuration.yaml` and restart (or
-call the `logger.set_level` service for a no-restart change):
+- The poll itself failed. Check `coordinator.last_update_success` in the
+  diagnostics JSON.
+- The poll succeeded but the reading is stale. The sensor is off or out of
+  cloud sync. Check the **Last sample** entity, which stays available.
+
+### Download diagnostics
+
+The integration tile has a **Download diagnostics** action that produces a
+sanitized JSON snapshot for a bug report. The viewToken, the MAC address, and
+every other sensitive field are redacted, so the file is safe to share
+publicly.
+
+### Turn on debug logging
+
+Add the following to `configuration.yaml` and restart. To change the level
+without restarting, call the `logger.set_level` action instead.
 
 ```yaml
 logger:
@@ -212,26 +218,57 @@ logger:
     custom_components.visiblair: debug
 ```
 
-At `debug` you'll see, in `Settings → System → Logs`:
+At `debug`, **Settings > System > Logs** shows:
 
-- **Setup** — the sensor name, MAC, and poll interval.
-- **Each poll** — `Polled <MAC>: CO2=… PM2.5=… battery=…` once per cycle, so
+- **Setup.** The sensor name, MAC address, and poll interval.
+- **Each poll.** One `Polled <MAC>: CO2=… PM2.5=… battery=…` line per cycle, so
   you can confirm data is flowing.
-- **Errors** — API transport/parse failures (coordinator failures are logged
-  once on failure and once on recovery, HA's standard behaviour).
+- **Errors.** API transport and parse failures. Coordinator failures are logged
+  once when they start and once when they recover, which is standard Home
+  Assistant behavior.
 
-The viewToken is **never** logged at any level.
+## How the integration is built
 
-## Contributing
+- **Defensive parsing.** The cloud API returns `200 OK` with an empty body for
+  any URL that isn't an exact route match, so a URL that doesn't exist looks
+  like a working endpoint. The integration treats an empty
+  body as a failure whatever the status code, parses JSON without trusting the
+  misdeclared `text/plain` content type, and unwraps the Go-style
+  `{"Float64": x, "Valid": false}` nullable numerics so an absent value becomes
+  `None` instead of zero.
+- **Description-driven entities.** All 26 entities come from one table. Adding
+  a field that VisiblAir starts reporting is a one-row change, and a
+  completeness test fails the build if the wiring is missed.
+- **Enforced quality gates.** ruff (lint and format), mypy in strict mode, and
+  pytest with a 95% coverage floor run on every push to `main` and every pull
+  request. Actual line coverage is 100%. The suite covers the config, reauth,
+  and reconfigure flows, entity states, the HTTP layer and its normalizer
+  quirks, and diagnostics redaction.
+- **Architecture record.** [docs/architecture.md](docs/architecture.md)
+  documents the API surface, the catch-all route trap, the local-API firmware
+  bug, the entity map, and the design decisions behind each.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, the local lint
-& test commands, and the "add a new entity" recipe.
+The integration targets the Platinum tier of the Home Assistant Integration
+Quality Scale. See
+[`custom_components/visiblair/quality_scale.yaml`](custom_components/visiblair/quality_scale.yaml)
+for per-rule status.
+
+## Contribute
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, the local lint
+and test commands, and the recipe for adding an entity.
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE).
+Apache 2.0. See [LICENSE](LICENSE).
+
+The VisiblAir logo is bundled at `custom_components/visiblair/brand/` and
+served through Home Assistant's Brands Proxy API. "VisiblAir" is a trademark of
+its owner.
 
 ## Related projects
 
 - [aranet-cloud-homeassistant](https://github.com/jasonjhofmann/aranet-cloud-homeassistant)
-  — sibling integration for Aranet Cloud sensors, same author, same design ethos.
+  reads Aranet Cloud sensors into Home Assistant.
+- [sensoredlife-homeassistant](https://github.com/jasonjhofmann/sensoredlife-homeassistant)
+  reads SensoredLife MarCELL cellular monitors into Home Assistant.
