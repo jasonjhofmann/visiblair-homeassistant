@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.2 — 2026-08-27
+
+- **Repository CI/workflow hardening only — no integration code changes.**
+  Gate the @claude workflows on the triggering actor having write access,
+  cite the entrypoint the pinned action actually runs (`run.ts`), and stop
+  running the automated review on Dependabot PRs.
+
 ## 0.9.1 — 2026-08-24
 
 - **README rewrite.** Added the VisiblAir logo, restructured the page around
