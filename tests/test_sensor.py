@@ -130,8 +130,8 @@ async def test_device_registry_key_literals(
     assert device_info["connections"] == {("mac", "aa:bb:cc:dd:ee:ff")}
 
     device_reg = dr.async_get(hass)
-    device = device_reg.async_get_device(
-        identifiers={("visiblair", "AA:BB:CC:DD:EE:FF")}
+    device = device_reg.async_get_device_by_identifier(
+        ("visiblair", "AA:BB:CC:DD:EE:FF"), init_integration.entry_id
     )
     assert device is not None
     assert device.connections == {("mac", "aa:bb:cc:dd:ee:ff")}

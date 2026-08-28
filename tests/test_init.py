@@ -74,7 +74,9 @@ async def test_device_registered(
 ) -> None:
     """The sensor is registered as a device with a MAC connection."""
     device_reg = dr.async_get(hass)
-    device = device_reg.async_get_device(identifiers={(DOMAIN, "AA:BB:CC:DD:EE:FF")})
+    device = device_reg.async_get_device_by_identifier(
+        (DOMAIN, "AA:BB:CC:DD:EE:FF"), init_integration.entry_id
+    )
     assert device is not None
     assert device.manufacturer == "VisiblAir"
 
