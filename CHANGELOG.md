@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- **CI: mypy now type-checks against the declared floor
+  (`homeassistant==2026.7.0`).** HA 2026.9 moved core from voluptuous to
+  probatio, and HA 2026.10 retyped schema arguments to match, so mypy against
+  the newest HA flagged the voluptuous schemas older releases need. The next
+  push would have failed CI. Typing only: HA still accepts voluptuous schemas
+  at runtime, and the test job still runs on the newest HA. No integration
+  code changes.
+
 ## 0.9.2 — 2026-08-27
 
 - **Repository CI/workflow hardening only — no integration code changes.**
