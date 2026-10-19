@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.3 — 2026-10-18
 
 - **CI: new Minimum supported HA job, now the only mypy run.** It reads the
   floor from `hacs.json` and the integration's requirements from
@@ -13,6 +13,9 @@
   the test job still runs on the newest HA. No integration code changes.
 - **CI: the workflow also runs nightly**, so a change in the latest Home
   Assistant shows up the day it lands instead of at the next push.
+- **Tests: device lookups migrated to `async_get_device_by_identifier`**
+  (2026-08-27). HA dev hard-errors the deprecated `async_get_device` in test
+  frames. No integration code changes.
 
 ## 0.9.2 — 2026-08-27
 
