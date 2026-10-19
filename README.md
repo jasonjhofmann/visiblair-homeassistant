@@ -239,9 +239,10 @@ At `debug`, **Settings > System > Logs** shows:
 - **Description-driven entities.** All 26 entities come from one table. Adding
   a field that VisiblAir starts reporting is a one-row change, and a
   completeness test fails the build if the wiring is missed.
-- **Enforced quality gates.** ruff (lint and format), mypy in strict mode, and
-  pytest with a 95% coverage floor run on every push to `main` and every pull
-  request. Actual line coverage is 100%. The suite covers the config, reauth,
+- **Enforced quality gates.** ruff (lint and format), pytest with a 95%
+  coverage floor, and a job that imports every module and runs mypy in strict
+  mode against the minimum supported Home Assistant run on every push to
+  `main`, every pull request, and nightly. Actual line coverage is 100%. The suite covers the config, reauth,
   and reconfigure flows, entity states, the HTTP layer and its normalizer
   quirks, and diagnostics redaction.
 - **Architecture record.** [docs/architecture.md](docs/architecture.md)
