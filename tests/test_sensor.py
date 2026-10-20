@@ -181,3 +181,24 @@ async def test_firmware_is_diagnostic(
     ent_reg = er.async_get(hass)
     entity_id = ent_reg.async_get_entity_id("sensor", DOMAIN, uid("firmware_version"))
     assert ent_reg.async_get(entity_id).entity_category is EntityCategory.DIAGNOSTIC
+
+
+async def test_pm_device_classes(
+    hass: HomeAssistant, init_integration: MockConfigEntry
+) -> None:
+    """PM sizes with an HA device class carry it (PM4 since HA 2025.10)."""
+    ent_reg = er.async_get(hass)
+    expected = {
+        "pm_0_1": None,
+        "pm_0_3": None,
+        "pm_0_5": None,
+        "pm_1_0": "pm1",
+        "pm_2_5": "pm25",
+        "pm_4_0": "pm4",
+        "pm_5_0": None,
+        "pm_10_0": "pm10",
+    }
+    for key, device_class in expected.items():
+        entity_id = ent_reg.async_get_entity_id("sensor", DOMAIN, uid(key))
+        assert entity_id is not None, key
+        assert ent_reg.async_get(entity_id).original_device_class == device_class, key

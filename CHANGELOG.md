@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.5 — 2026-10-20
+
+- **PM 4 now has Home Assistant's `pm4` device class.** HA added it in
+  2025.10, below this integration's 2026.7 floor, but the PM 4 sensor
+  still had none, unlike PM 1, PM 2.5, and PM 10. The sensor stays
+  disabled by default; its unit and statistics are unchanged. A new test
+  pins the device class of every PM size.
+
 ## 0.9.4 — 2026-10-20
 
 - **README brought up to date.** It said Home Assistant has no PM 4 device

@@ -76,9 +76,9 @@ class VisiblAirSensorEntityDescription(SensorEntityDescription):
 
 # Particulate-matter device-class mapping.
 #
-# Only PM 1.0, 2.5, and 10.0 µm set a device class. HA has had PM4 since
-# 2025.10, but pm_4_0 doesn't use it yet. The other PM sizes VisiblAir
-# reports (0.1, 0.3, 0.5, 4.0, 5.0 µm) get no device class
+# PM 1.0, 2.5, 4.0, and 10.0 µm set HA's particulate device classes (PM4
+# exists since HA 2025.10, below this integration's floor). The other PM
+# sizes VisiblAir reports (0.1, 0.3, 0.5, 5.0 µm) get no device class
 # — they still graph and record fine, just without HA's built-in icon/colour
 # semantics.
 #
@@ -183,6 +183,7 @@ SENSOR_DESCRIPTIONS: tuple[VisiblAirSensorEntityDescription, ...] = (
     VisiblAirSensorEntityDescription(
         key="pm_4_0",
         translation_key="pm_4_0",
+        device_class=SensorDeviceClass.PM4,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfDensity.MICROGRAMS_PER_CUBIC_METER,
         suggested_display_precision=2,

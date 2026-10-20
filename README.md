@@ -99,10 +99,8 @@ new entry if you want to track a different sensor.
 
 Every entity carries units and a state class, and most carry a device class,
 so long-term statistics and the air-quality dashboard cards work without extra
-configuration. PM 1, PM 2.5, and PM 10 use Home Assistant's particulate device
-classes. PM 0.1, 0.3, 0.5, 4, and 5 report in µg/m³ without one. Home
-Assistant has had a PM 4 class since 2025.10, which this integration doesn't
-set yet.
+configuration. PM 1, PM 2.5, PM 4, and PM 10 use Home Assistant's particulate
+device classes. PM 0.1, 0.3, 0.5, and 5 report in µg/m³ without one.
 
 Six entities are disabled by default: PM 0.1, 0.3, 0.5, 4, and 5 µm, and the
 battery-voltage diagnostic. Enable any of them from the entity's settings if
