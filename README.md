@@ -97,10 +97,12 @@ new entry if you want to track a different sensor.
 | Diagnostic | Firmware version, last sample, last calibration, battery voltage |
 | Hardware health | PM fan fail, laser fail, RHT error, gas-sensor error, fan-speed warning, fan cleaning |
 
-Every entity carries units, a state class, and a device class where Home
-Assistant has one, so long-term statistics and the air-quality dashboard cards
-work without extra configuration. Device classes exist for PM 1, PM 2.5, and
-PM 10; the other five PM sizes report in µg/m³ without one.
+Every entity carries units and a state class, and most carry a device class,
+so long-term statistics and the air-quality dashboard cards work without extra
+configuration. PM 1, PM 2.5, and PM 10 use Home Assistant's particulate device
+classes. PM 0.1, 0.3, 0.5, 4, and 5 report in µg/m³ without one. Home
+Assistant has had a PM 4 class since 2025.10, which this integration doesn't
+set yet.
 
 Six entities are disabled by default: PM 0.1, 0.3, 0.5, 4, and 5 µm, and the
 battery-voltage diagnostic. Enable any of them from the entity's settings if
@@ -236,9 +238,11 @@ At `debug`, **Settings > System > Logs** shows:
   misdeclared `text/plain` content type, and unwraps the Go-style
   `{"Float64": x, "Valid": false}` nullable numerics so an absent value becomes
   `None` instead of zero.
-- **Description-driven entities.** All 26 entities come from one table. Adding
-  a field that VisiblAir starts reporting is a one-row change, and a
-  completeness test fails the build if the wiring is missed.
+- **Description-driven entities.** All 26 entities come from two description
+  tables, one per platform. Adding a field that VisiblAir starts reporting
+  takes a dataclass field, one description row, and a translation string (see
+  [CONTRIBUTING.md](CONTRIBUTING.md)), and a completeness test fails the build
+  if the wiring is missed.
 - **Enforced quality gates.** ruff (lint and format), pytest with a 95%
   coverage floor, and a job that imports every module and runs mypy in strict
   mode against the minimum supported Home Assistant run on every push to

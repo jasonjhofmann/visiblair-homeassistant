@@ -277,7 +277,7 @@ in `unique_id`, and the entity-ID slug component (e.g.
 | `pm_0_5` | `lastSamplePm05.Float64` | `μg/m³` | (no HA class) |
 | `pm_1_0` | `lastSamplePm10.Float64` | `μg/m³` | `pm1` |
 | `pm_2_5` | `lastSamplePm25.Float64` | `μg/m³` | `pm25` |
-| `pm_4_0` | nested `lastSampleDataRedis.pm40` | `μg/m³` | (no HA class) |
+| `pm_4_0` | nested `lastSampleDataRedis.pm40` | `μg/m³` | (none set; HA has `pm4` since 2025.10) |
 | `pm_5_0` | `lastSamplePm50.Float64` | `μg/m³` | (no HA class) |
 | `pm_10_0` | `lastSamplePm100.Float64` | `μg/m³` | `pm10` |
 | `battery` | `lastSampleBattPct.Float64` | `%` | `battery` |

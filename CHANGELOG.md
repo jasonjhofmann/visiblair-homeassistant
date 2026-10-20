@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.4 — 2026-10-20
+
+- **README brought up to date.** It said Home Assistant has no PM 4 device
+  class; HA has had one since 2025.10 (this integration doesn't set it yet),
+  so the PM paragraph now says which sizes carry a class. The entities come
+  from two description tables, one per platform, not one, and adding a field
+  takes a few small edits rather than one row. HACS shows the README from the
+  latest release, which is why this ships as one. No integration code
+  changes (a code comment and `docs/architecture.md` corrected to match).
+
 ## 0.9.3 — 2026-10-18
 
 - **CI: new Minimum supported HA job, now the only mypy run.** It reads the
